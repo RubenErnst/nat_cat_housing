@@ -325,105 +325,288 @@ hmda_lar_2007$county_name <- NULL
 rm(hmda_counties)
 
 
+# Make ethnicities table, add values
+hmda_ethnicities <- subset(unique(rbind(select(hmda_lar_2007, "ethnicity" = applicant_ethnicity, "ethnicity_name" = applicant_ethnicity_name),
+                                        select(hmda_lar_2007, "ethnicity" = co_applicant_ethnicity, "ethnicity_name" = co_applicant_ethnicity_name))), !is.na(ethnicity))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE ethnicities (ethnicity INT, ethnicity_name TEXT, PRIMARY KEY (ethnicity));")
+)
+
+for (i in 1:nrow(hmda_ethnicities)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO ethnicities VALUES (", hmda_ethnicities$ethnicity[i], ", '",
+                                hmda_ethnicities$ethnicity_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_ethnicities)))
+}
+
+hmda_lar_2007$applicant_ethnicity_name <- NULL
+hmda_lar_2007$co_applicant_ethnicity_name <- NULL
+rm(hmda_ethnicities)
 
 
+# Make races table, add values
+hmda_races <- subset(unique(rbind(select(hmda_lar_2007, "race" = applicant_race_1, "race_name" = applicant_race_name_1),
+                                  select(hmda_lar_2007, "race" = applicant_race_2, "race_name" = applicant_race_name_2),
+                                  select(hmda_lar_2007, "race" = applicant_race_3, "race_name" = applicant_race_name_3),
+                                  select(hmda_lar_2007, "race" = applicant_race_4, "race_name" = applicant_race_name_4),
+                                  select(hmda_lar_2007, "race" = applicant_race_5, "race_name" = applicant_race_name_5),
+                                  select(hmda_lar_2007, "race" = co_applicant_race_1, "race_name" = co_applicant_race_name_1),
+                                  select(hmda_lar_2007, "race" = co_applicant_race_2, "race_name" = co_applicant_race_name_2),
+                                  select(hmda_lar_2007, "race" = co_applicant_race_3, "race_name" = co_applicant_race_name_3),
+                                  select(hmda_lar_2007, "race" = co_applicant_race_4, "race_name" = co_applicant_race_name_4),
+                                  select(hmda_lar_2007, "race" = co_applicant_race_5, "race_name" = co_applicant_race_name_5))), !is.na(race))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE races (race INT, race_name TEXT, PRIMARY KEY (race));")
+)
+
+for (i in 1:nrow(hmda_races)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO races VALUES (", hmda_races$race[i], ", '",
+                                hmda_races$race_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_races)))
+}
+
+hmda_lar_2007$applicant_race_name_1 <- NULL
+hmda_lar_2007$applicant_race_name_2 <- NULL
+hmda_lar_2007$applicant_race_name_3 <- NULL
+hmda_lar_2007$applicant_race_name_4 <- NULL
+hmda_lar_2007$applicant_race_name_5 <- NULL
+hmda_lar_2007$co_applicant_race_name_1 <- NULL
+hmda_lar_2007$co_applicant_race_name_2 <- NULL
+hmda_lar_2007$co_applicant_race_name_3 <- NULL
+hmda_lar_2007$co_applicant_race_name_4 <- NULL
+hmda_lar_2007$co_applicant_race_name_5 <- NULL
+rm(hmda_races)
+gc()
 
 
+# Make sexes table, add values
+hmda_sexes <- subset(unique(rbind(select(hmda_lar_2007, "sex" = applicant_sex, "sex_name" = applicant_sex_name),
+                                  select(hmda_lar_2007, "sex" = co_applicant_sex, "sex_name" = co_applicant_sex_name))), !is.na(sex))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE sexes (sex INT, sex_name TEXT, PRIMARY KEY (sex));")
+)
+
+for (i in 1:nrow(hmda_sexes)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO sexes VALUES (", hmda_sexes$sex[i], ", '",
+                                hmda_sexes$sex_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_sexes)))
+}
+
+hmda_lar_2007$applicant_sex_name <- NULL
+hmda_lar_2007$co_applicant_sex_name <- NULL
+rm(hmda_sexes)
+gc()
 
 
+# Make purchaser_types table, add values
+hmda_purchaser_types <- subset(unique(select(hmda_lar_2007, "purchaser_type" = purchaser_type, "purchaser_type_name" = purchaser_type_name)), !is.na(purchaser_type))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE purchaser_types (purchaser_type INT, purchaser_type_name TEXT, PRIMARY KEY (purchaser_type));")
+)
+
+for (i in 1:nrow(hmda_purchaser_types)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO purchaser_types VALUES (", hmda_purchaser_types$purchaser_type[i], ", '",
+                                hmda_purchaser_types$purchaser_type_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_purchaser_types)))
+}
+
+hmda_lar_2007$purchaser_type_name <- NULL
+rm(hmda_purchaser_types)
+gc()
 
 
+# Make denial_reasons table, add values
+hmda_denial_reasons <- subset(unique(rbind(select(hmda_lar_2007, "denial_reason" = denial_reason_1, "denial_reason_name" = denial_reason_name_1),
+                                           select(hmda_lar_2007, "denial_reason" = denial_reason_2, "denial_reason_name" = denial_reason_name_2),
+                                           select(hmda_lar_2007, "denial_reason" = denial_reason_3, "denial_reason_name" = denial_reason_name_3))), !is.na(denial_reason))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE denial_reasons (denial_reason INT, denial_reason_name TEXT, PRIMARY KEY (denial_reason));")
+)
+
+for (i in 1:nrow(hmda_denial_reasons)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO denial_reasons VALUES (", hmda_denial_reasons$denial_reason[i], ", '",
+                                hmda_denial_reasons$denial_reason_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_denial_reasons)))
+}
+
+hmda_lar_2007$denial_reason_name_1 <- NULL
+hmda_lar_2007$denial_reason_name_2 <- NULL
+hmda_lar_2007$denial_reason_name_3 <- NULL
+rm(hmda_denial_reasons)
+gc()
 
 
+# Make hoepa_statuses table, add values
+hmda_hoepa_statuses <- subset(unique(select(hmda_lar_2007, "hoepa_status" = hoepa_status, "hoepa_status_name" = hoepa_status_name)), !is.na(hoepa_status))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE hoepa_statuses (hoepa_status INT, hoepa_status_name TEXT, PRIMARY KEY (hoepa_status));")
+)
+
+for (i in 1:nrow(hmda_hoepa_statuses)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO hoepa_statuses VALUES (", hmda_hoepa_statuses$hoepa_status[i], ", '",
+                                hmda_hoepa_statuses$hoepa_status_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_hoepa_statuses)))
+}
+
+hmda_lar_2007$hoepa_status_name <- NULL
+rm(hmda_hoepa_statuses)
+gc()
 
 
+# Make lien_statuses table, add values
+hmda_lien_statuses <- subset(unique(select(hmda_lar_2007, "lien_status" = lien_status, "lien_status_name" = lien_status_name)), !is.na(lien_status))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE lien_statuses (lien_status INT, lien_status_name TEXT, PRIMARY KEY (lien_status));")
+)
+
+for (i in 1:nrow(hmda_lien_statuses)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO lien_statuses VALUES (", hmda_lien_statuses$lien_status[i], ", '",
+                                hmda_lien_statuses$lien_status_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_lien_statuses)))
+}
+
+hmda_lar_2007$lien_status_name <- NULL
+rm(hmda_lien_statuses)
+gc()
 
 
+# Make edit_statuses table, add values
+hmda_edit_statuses <- subset(unique(select(hmda_lar_2007, "edit_status" = edit_status, "edit_status_name" = edit_status_name)), !is.na(edit_status))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE edit_statuses (edit_status INT, edit_status_name TEXT, PRIMARY KEY (edit_status));")
+)
+
+for (i in 1:nrow(hmda_edit_statuses)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO edit_statuses VALUES (", hmda_edit_statuses$edit_status[i], ", '",
+                                hmda_edit_statuses$edit_status_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_edit_statuses)))
+}
+
+hmda_lar_2007$edit_status_name <- NULL
+rm(hmda_edit_statuses)
+gc()
 
 
+# Make application_date_indicators table, add values
+hmda_application_date_indicators <- subset(unique(select(hmda_lar_2007, "application_date_indicator" = application_date_indicator)), !is.na(application_date_indicator))
+hmda_application_date_indicators$application_date_indicator_name <- c("Application Date >= 01-01-2004", "Application Date = NA (Not Available)", "Application Date < 01-01-2004")
 
 dbClearResult(
-  dbSendQuery(hmda_db, paste0("CREATE TABLE hmda (",
-                              as_of_year = int,
-                              respondent_id = int,
-                              agency_name = character,
-                              agency_abbr = character,
-                              agency_code = int,
-                              loan_type_name = character,
-                              loan_type = int,
-                              property_type_name = character,
-                              property_type = int,
-                              loan_purpose_name = character,
-                              loan_purpose = int,
-                              owner_occupancy_name = character,
-                              owner_occupancy = numeric,
-                              loan_amount_000s = numeric,
-                              preapproval_name = character,
-                              preapproval = numeric,
-                              action_taken_name = character,
-                              action_taken = numeric,
-                              msamd_name = character,
-                              msamd = numeric,
-                              state_name = character,
-                              state_abbr = character,
-                              state_code = numeric,
-                              county_name = character,
-                              county_code = numeric,
-                              census_tract_number = character,
-                              applicant_ethnicity_name = character,
-                              applicant_ethnicity = numeric,
-                              co_applicant_ethnicity_name = character,
-                              co_applicant_ethnicity = numeric,
-                              applicant_race_name_1 = character,
-                              applicant_race_1 = numeric,
-                              applicant_race_name_2 = character,
-                              applicant_race_2 = numeric,
-                              applicant_race_name_3 = logical,
-                              applicant_race_3 = logical,
-                              applicant_race_name_4 = logical,
-                              applicant_race_4 = logical,
-                              applicant_race_name_5 = logical,
-                              applicant_race_5 = logical,
-                              co_applicant_race_name_1 = character,
-                              co_applicant_race_1 = numeric,
-                              co_applicant_race_name_2 = character,
-                              co_applicant_race_2 = numeric,
-                              co_applicant_race_name_3 = logical,
-                              co_applicant_race_3 = logical,
-                              co_applicant_race_name_4 = logical,
-                              co_applicant_race_4 = logical,
-                              co_applicant_race_name_5 = logical,
-                              co_applicant_race_5 = logical,
-                              applicant_sex_name = character,
-                              applicant_sex = numeric,
-                              co_applicant_sex_name = character,
-                              co_applicant_sex = numeric,
-                              applicant_income_000s = numeric,
-                              purchaser_type_name = character,
-                              purchaser_type = numeric,
-                              denial_reason_name_1 = character,
-                              denial_reason_1 = numeric,
-                              denial_reason_name_2 = character,
-                              denial_reason_2 = numeric,
-                              denial_reason_name_3 = character,
-                              denial_reason_3 = numeric,
-                              rate_spread = character,
-                              hoepa_status_name = character,
-                              hoepa_status = numeric,
-                              lien_status_name = character,
-                              lien_status = numeric,
-                              edit_status_name = character,
-                              edit_status = numeric,
-                              sequence_number = character,
-                              population = numeric,
-                              minority_population = numeric,
-                              hud_median_family_income = numeric,
-                              tract_to_msamd_income = numeric,
-                              number_of_owner_occupied_units = numeric,
-                              number_of_1_to_4_family_units = numeric,
-                              application_date_indicator = numeric)
-                              
-                              
-                      
-                      
-bDisconnect(hmda_db)
+  dbSendQuery(hmda_db, "CREATE TABLE application_date_indicators (application_date_indicator INT, application_date_indicator_name TEXT, PRIMARY KEY (application_date_indicator));")
+)
+
+for (i in 1:nrow(hmda_application_date_indicators)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO application_date_indicators VALUES (", hmda_application_date_indicators$application_date_indicator[i], ", '",
+                                hmda_application_date_indicators$application_date_indicator_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_application_date_indicators)))
+}
+
+rm(hmda_application_date_indicators)
+gc()
+
+
+# Make main table, add values
+dbClearResult(
+  dbSendQuery(hmda_db, paste0("CREATE TABLE hmda (
+                              as_of_year INT,
+                              respondent_id VARCHAR(10),
+                              agency_code INT,
+                              loan_type INT,
+                              property_type INT,
+                              loan_purpose INT,
+                              owner_occupancy INT,
+                              loan_amount_000s INT,
+                              preapproval INT,
+                              action_taken INT,
+                              msamd INT,
+                              state_code INT,
+                              county_code INT,
+                              census_tract_number VARCHAR(7),
+                              applicant_ethnicity INT,
+                              co_applicant_ethnicity INT,
+                              applicant_race_1 INT,
+                              applicant_race_2 INT,
+                              applicant_race_3 INT,
+                              applicant_race_4 INT,
+                              applicant_race_5 INT,
+                              co_applicant_race_1 INT,
+                              co_applicant_race_2 INT,
+                              co_applicant_race_3 INT,
+                              co_applicant_race_4 INT,
+                              co_applicant_race_5 INT,
+                              applicant_sex INT,
+                              co_applicant_sex INT,
+                              applicant_income_000s INT,
+                              purchaser_type INT,
+                              denial_reason_1 INT,
+                              denial_reason_2 INT,
+                              denial_reason_3 INT,
+                              rate_spread NUMERIC(3, 2),
+                              hoepa_status INT,
+                              lien_status INT,
+                              edit_status INT,
+                              sequence_number VARCHAR(7),
+                              population INT,
+                              minority_population NUMERIC(3, 2),
+                              hud_median_family_income INT,
+                              tract_to_msamd_income NUMERIC(3, 2),
+                              number_of_owner_occupied_units INT,
+                              number_of_1_to_4_family_units INT,
+                              application_date_indicator INT,
+                              FOREIGN KEY (action_taken) REFERENCES actions_taken(action_taken),
+                              FOREIGN KEY (agency_code) REFERENCES agencies(agency_code),
+                              FOREIGN KEY (application_date_indicator) REFERENCES application_date_indicators(application_date_indicator),
+                              FOREIGN KEY (state_code, county_code) REFERENCES counties(state_code, county_code),
+                              FOREIGN KEY (denial_reason_1) REFERENCES denial_reasons(denial_reason),
+                              FOREIGN KEY (denial_reason_2) REFERENCES denial_reasons(denial_reason),
+                              FOREIGN KEY (denial_reason_3) REFERENCES denial_reasons(denial_reason),
+                              FOREIGN KEY (edit_status) REFERENCES edit_statuses(edit_status),
+                              FOREIGN KEY (applicant_ethnicity) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (co_applicant_ethnicity) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (hoepa_status) REFERENCES hoepa_statuses(hoepa_status),
+                              FOREIGN KEY (lien_status) REFERENCES lien_statuses(lien_status),
+                              FOREIGN KEY (loan_purpose) REFERENCES loan_purposes(loan_purpose),
+                              FOREIGN KEY (loan_type) REFERENCES loan_types(loan_type),
+                              FOREIGN KEY (msamd) REFERENCES msamds(msamd),
+                              FOREIGN KEY (owner_occupancy) REFERENCES owner_occupancies(owner_occupancy),
+                              FOREIGN KEY (preapproval) REFERENCES preapprovals(preapproval),
+                              FOREIGN KEY (property_type) REFERENCES property_types(property_type),
+                              FOREIGN KEY (purchaser_type) REFERENCES purchaser_types(purchaser_type),
+                              FOREIGN KEY (applicant_race_1) REFERENCES races(race),
+                              FOREIGN KEY (applicant_race_2) REFERENCES races(race),
+                              FOREIGN KEY (applicant_race_3) REFERENCES races(race),
+                              FOREIGN KEY (applicant_race_4) REFERENCES races(race),
+                              FOREIGN KEY (applicant_race_5) REFERENCES races(race),
+                              FOREIGN KEY (co_applicant_race_1) REFERENCES races(race),
+                              FOREIGN KEY (co_applicant_race_2) REFERENCES races(race),
+                              FOREIGN KEY (co_applicant_race_3) REFERENCES races(race),
+                              FOREIGN KEY (co_applicant_race_4) REFERENCES races(race),
+                              FOREIGN KEY (co_applicant_race_5) REFERENCES races(race),
+                              FOREIGN KEY (applicant_sex) REFERENCES sexes(sex),
+                              FOREIGN KEY (co_applicant_sex) REFERENCES sexes(sex),
+                              FOREIGN KEY (state_code) REFERENCES states(state_code));")
+  )
+)
+
+# TODO: Add columns, foreign keys, (primary key) from 2018+ format
+# TODO: Ingest data -> replace NA with NULL
+
+
+dbDisconnect(hmda_db)
