@@ -522,17 +522,354 @@ rm(hmda_application_date_indicators)
 gc()
 
 
+# Make reverse_mortgages table, add values
+hmda_reverse_mortgages <- data.frame("reverse_mortgage" = c(1, 2, 1111, -1),
+                                     "reverse_mortgage_name" = c("Reverse mortgage", "Not a reverse mortgage", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE reverse_mortgages (reverse_mortgage INT, reverse_mortgage_name TEXT, PRIMARY KEY (reverse_mortgage));")
+)
+
+for (i in 1:nrow(hmda_reverse_mortgages)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO reverse_mortgages VALUES (", hmda_reverse_mortgages$reverse_mortgage[i], ", '",
+                                hmda_reverse_mortgages$reverse_mortgage_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_reverse_mortgages)))
+}
+
+rm(hmda_reverse_mortgages)
+gc()
+
+
+# Make open_end_locs table, add values
+hmda_open_end_locs <- data.frame("open_end_line_of_credit" = c(1, 2, 1111, -1),
+                                 "open_end_line_of_credit_name" = c("Open-end line of credit", "Not an open-end line of credit", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE open_end_locs (open_end_line_of_credit INT, open_end_line_of_credit_name TEXT, PRIMARY KEY (open_end_line_of_credit));")
+)
+
+for (i in 1:nrow(hmda_open_end_locs)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO open_end_locs VALUES (", hmda_open_end_locs$open_end_line_of_credit[i], ", '",
+                                hmda_open_end_locs$open_end_line_of_credit_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_open_end_locs)))
+}
+
+rm(hmda_open_end_locs)
+gc()
+
+
+# Make business_or_commercial_purposes table, add values
+hmda_business_or_commercial_purposes <- data.frame("business_or_commercial_purpose" = c(1, 2, 1111, -1),
+                                                   "business_or_commercial_purpose_name" = c("Primarily for a business or commercial purpose", "Not primarily for a business or commercial purpose", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE business_or_commercial_purposes (business_or_commercial_purpose INT, business_or_commercial_purpose_name TEXT, PRIMARY KEY (business_or_commercial_purpose));")
+)
+
+for (i in 1:nrow(hmda_business_or_commercial_purposes)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO business_or_commercial_purposes VALUES (", hmda_business_or_commercial_purposes$business_or_commercial_purpose[i], ", '",
+                                hmda_business_or_commercial_purposes$business_or_commercial_purpose_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_business_or_commercial_purposes)))
+}
+
+rm(hmda_business_or_commercial_purposes)
+gc()
+
+
+# Make negative_amortizations table, add values
+hmda_negative_amortizations <- data.frame("negative_amortization" = c(1, 2, 1111, -1),
+                                          "negative_amortization_name" = c("Negative amortization", "No negative amortization", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE negative_amortizations (negative_amortization INT, negative_amortization_name TEXT, PRIMARY KEY (negative_amortization));")
+)
+
+for (i in 1:nrow(hmda_negative_amortizations)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO negative_amortizations VALUES (", hmda_negative_amortizations$negative_amortization[i], ", '",
+                                hmda_negative_amortizations$negative_amortization_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_negative_amortizations)))
+}
+
+rm(hmda_negative_amortizations)
+gc()
+
+
+# Make interest_only_payments table, add values
+hmda_interest_only_payments <- data.frame("interest_only_payment" = c(1, 2, 1111, -1),
+                                          "interest_only_payment_name" = c("Interest-only payments", "No interest-only payments", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE interest_only_payments (interest_only_payment INT, interest_only_payment_name TEXT, PRIMARY KEY (interest_only_payment));")
+)
+
+for (i in 1:nrow(hmda_interest_only_payments)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO interest_only_payments VALUES (", hmda_interest_only_payments$interest_only_payment[i], ", '",
+                                hmda_interest_only_payments$interest_only_payment_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_interest_only_payments)))
+}
+
+rm(hmda_interest_only_payments)
+gc()
+
+
+# Make balloon_payments table, add values
+hmda_balloon_payments <- data.frame("balloon_payment" = c(1, 2, 1111, -1),
+                                    "balloon_payment_name" = c("Balloon payment", "No balloon payment", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE balloon_payments (balloon_payment INT, balloon_payment_name TEXT, PRIMARY KEY (balloon_payment));")
+)
+
+for (i in 1:nrow(hmda_balloon_payments)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO balloon_payments VALUES (", hmda_balloon_payments$balloon_payment[i], ", '",
+                                hmda_balloon_payments$balloon_payment_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_balloon_payments)))
+}
+
+rm(hmda_balloon_payments)
+gc()
+
+
+# Make other_nonamortizing_features table, add values
+hmda_other_nonamortizing_features <- data.frame("other_nonamortizing_features" = c(1, 2, 1111, -1),
+                                                "other_nonamortizing_features_name" = c("Other non-fully amortizing features", "No other non-fully amortizing features", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE other_nonamortizing_features (other_nonamortizing_features INT, other_nonamortizing_features_name TEXT, PRIMARY KEY (other_nonamortizing_features));")
+)
+
+for (i in 1:nrow(hmda_other_nonamortizing_features)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO other_nonamortizing_features VALUES (", hmda_other_nonamortizing_features$other_nonamortizing_features[i], ", '",
+                                hmda_other_nonamortizing_features$other_nonamortizing_features_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_other_nonamortizing_features)))
+}
+
+rm(hmda_other_nonamortizing_features)
+gc()
+
+
+# Make construction_methods table, add values
+hmda_construction_methods <- data.frame("construction_method" = c(1, 2, -1),
+                                        "construction_method_name" = c("Site-built", "Manufactured home", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE construction_methods (construction_method INT, construction_method_name TEXT, PRIMARY KEY (construction_method));")
+)
+
+for (i in 1:nrow(hmda_construction_methods)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO construction_methods VALUES (", hmda_construction_methods$construction_method[i], ", '",
+                                hmda_construction_methods$construction_method_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_construction_methods)))
+}
+
+rm(hmda_construction_methods)
+gc()
+
+
+# Make occupancy_types table, add values
+hmda_occupancy_types <- data.frame("occupancy_type" = c(1, 2, 3, -1),
+                                   "occupancy_type_name" = c("Principal residence", "Second residence", "Investment property", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE occupancy_types (occupancy_type INT, occupancy_type_name TEXT, PRIMARY KEY (occupancy_type));")
+)
+
+for (i in 1:nrow(hmda_occupancy_types)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO occupancy_types VALUES (", hmda_occupancy_types$occupancy_type[i], ", '",
+                                hmda_occupancy_types$occupancy_type_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_occupancy_types)))
+}
+
+rm(hmda_occupancy_types)
+gc()
+
+
+# Make credit_score_types table, add values
+hmda_credit_score_types <- data.frame("credit_score_type" = c(1:10, 1111, -1),
+                                      "credit_score_type_name" = c("Equifax Beacon 5.0", "Experian Fair Isaac", "FICO Risk Score Classic 04", "FICO Risk Score Classic 98", "VantageScore 2.0", "VantageScore 3.0", "More than one credit scoring model", "Other credit scoring model", "Not applicable", "No co-applicant", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE credit_score_types (credit_score_type INT, credit_score_type_name TEXT, PRIMARY KEY (credit_score_type));")
+)
+
+for (i in 1:nrow(hmda_credit_score_types)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO credit_score_types VALUES (", hmda_credit_score_types$credit_score_type[i], ", '",
+                                hmda_credit_score_types$credit_score_type_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_credit_score_types)))
+}
+
+rm(hmda_credit_score_types)
+gc()
+
+
+# Make submission_of_applications table, add values
+hmda_submission_of_applications <- data.frame("submission_of_application" = c(1, 2, 3, 1111, -1),
+                                              "submission_of_application_name" = c("Submitted directly to your institution", "Not submitted directly to your institution", "Not applicable", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE submission_of_applications (submission_of_application INT, submission_of_application_name TEXT, PRIMARY KEY (submission_of_application));")
+)
+
+for (i in 1:nrow(hmda_submission_of_applications)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO submission_of_applications VALUES (", hmda_submission_of_applications$submission_of_application[i], ", '",
+                                hmda_submission_of_applications$submission_of_application_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_submission_of_applications)))
+}
+
+rm(hmda_submission_of_applications)
+gc()
+
+
+# Make initially_payable_to_institutions table, add values
+hmda_initially_payable_to_institutions <- data.frame("initially_payable_to_institution" = c(1, 2, 3, 1111, -1),
+                                                     "initially_payable_to_institution_name" = c("Initially payable to your institution", "Not initially payable to your institution", "Not applicable", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE initially_payable_to_institutions (initially_payable_to_institution INT, initially_payable_to_institution_name TEXT, PRIMARY KEY (initially_payable_to_institution));")
+)
+
+for (i in 1:nrow(hmda_initially_payable_to_institutions)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO initially_payable_to_institutions VALUES (", hmda_initially_payable_to_institutions$initially_payable_to_institution[i], ", '",
+                                hmda_initially_payable_to_institutions$initially_payable_to_institution_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_initially_payable_to_institutions)))
+}
+
+rm(hmda_initially_payable_to_institutions)
+gc()
+
+
+# Make auss table, add values
+hmda_auss <- data.frame("aus" = c(1:7, 1111, -1),
+                        "aus_name" = c("Desktop Underwriter (DU)", "Loan Prospector (LP) or Loan Product Advisor", "Technology Open to Approved Lenders (TOTAL) Scorecard", "Guaranteed Underwriting System (GUS)", "Other", "Not applicable", "Internal Proprietary System", "Exempt", "N/A"))
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE auss (aus INT, aus_name TEXT, PRIMARY KEY (aus));")
+)
+
+for (i in 1:nrow(hmda_auss)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO auss VALUES (", hmda_auss$aus[i], ", '",
+                                hmda_auss$aus_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_auss)))
+}
+
+rm(hmda_auss)
+gc()
+
+
+
+
+
+# Amend existing tables
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO purchaser_types VALUES (71, 'Credit union, mortgage company, or finance company');")
+)
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO purchaser_types VALUES (72, 'Life insurance company');")
+)
+
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO loan_purposes VALUES (31, 'Refinancing');")
+)
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO loan_purposes VALUES (32, 'Cash-out refinancing');")
+)
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO loan_purposes VALUES (4, 'Other purpose');")
+)
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO loan_purposes VALUES (5, 'Not applicable');")
+)
+
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO hoepa_statuses VALUES (3, 'Not applicable');")
+)
+
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO hoepa_statuses VALUES (3, 'Not applicable');")
+)
+
+hmda_add_ethnicities <- data.frame("ethnicity" = c(11, 12, 13, 14),
+                                   "ethnicity_name" = c("Mexican", "Puerto Rican", "Cuban", "Other Hispanic or Latino"))
+for (i in 1:nrow(hmda_add_ethnicities)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO ethnicities VALUES (", hmda_add_ethnicities$ethnicity[i], ", '",
+                                hmda_add_ethnicities$ethnicity_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_add_ethnicities)))
+}
+rm(hmda_add_ethnicities)
+
+hmda_add_races <- data.frame("race" = c(21, 22, 23, 24, 25, 26, 27, 41, 42, 43, 44),
+                             "race_name" = c("Asian Indian", "Chinese", "Filipino", "Japanese", "Korean", "Vietnamese", "Other Asian", "Native Hawaiian", "Guamanian or Chamorro", "Samoan", "Other Pacific Islander"))
+for (i in 1:nrow(hmda_add_races)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO races VALUES (", hmda_add_races$race[i], ", '",
+                                hmda_add_races$race_name[i], "');"))
+  )
+  print(paste0(i, "/", nrow(hmda_add_races)))
+}
+rm(hmda_add_races)
+
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO sexes VALUES (6, '(Co-)Applicant selected both male and female')")
+)
+
+dbClearResult(
+  dbSendQuery(hmda_db, "INSERT INTO denial_reasons VALUES (10, 'Not applicable')")
+)
+
+
+
 # Make main table, add values
 dbClearResult(
-  dbSendQuery(hmda_db, paste0("CREATE TABLE hmda (
+  dbSendQuery(hmda_db, paste0("CREATE TABLE main (
                               as_of_year INT,
                               respondent_id VARCHAR(10),
                               agency_code INT,
+                              conforming_loan_limit VARCHAR(2),
+                              reverse_mortgage INT,
+                              open_end_line_of_credit INT,
+                              business_or_commercial_purpose INT,
                               loan_type INT,
                               property_type INT,
                               loan_purpose INT,
                               owner_occupancy INT,
                               loan_amount_000s INT,
+                              loan_to_value_ratio NUMERIC,
+                              interest_rate NUMERIC,
+                              rate_spread NUMERIC,
+                              total_loan_costs NUMERIC,
+                              total_points_and_fees NUMERIC,
+                              origination_charges NUMERIC,
+                              discount_points NUMERIC,
+                              lender_credits NUMERIC,
+                              loan_term INT,
+                              prepayment_penalty_term INT,
+                              intro_rate_period INT,
+                              negative_amortization INT,
+                              interest_only_payment INT,
+                              balloon_payment INT,
+                              other_nonamortizing_features INT,
+                              property_value INT,
+                              construction_method INT,
+                              occupancy_type INT,
+                              total_units TEXT,
+                              debt_to_income_ratio TEXT,
+                              applicant_credit_score_type INT,
+                              co_applicant_credit_score_type INT,
                               preapproval INT,
                               action_taken INT,
                               msamd INT,
@@ -553,38 +890,67 @@ dbClearResult(
                               co_applicant_race_5 INT,
                               applicant_sex INT,
                               co_applicant_sex INT,
+                              applicant_age TEXT,
+                              co_applicant_age TEXT,
+                              applicant_age_above_62 VARCHAR(3),
+                              co_applicant_age_above_62 VARCHAR(3),
+                              submission_of_application INT,
+                              initially_payable_to_institution INT,
+                              aus_1 INT,
+                              aus_2 INT,
+                              aus_3 INT,
+                              aus_4 INT,
+                              aus_5 INT,
                               applicant_income_000s INT,
                               purchaser_type INT,
                               denial_reason_1 INT,
                               denial_reason_2 INT,
                               denial_reason_3 INT,
-                              rate_spread NUMERIC(3, 2),
+                              denial_reason_4 INT,
                               hoepa_status INT,
                               lien_status INT,
                               edit_status INT,
                               sequence_number VARCHAR(7),
                               population INT,
-                              minority_population NUMERIC(3, 2),
+                              minority_population NUMERIC,
                               hud_median_family_income INT,
-                              tract_to_msamd_income NUMERIC(3, 2),
+                              tract_to_msamd_income NUMERIC,
                               number_of_owner_occupied_units INT,
                               number_of_1_to_4_family_units INT,
+                              tract_median_age_of_housing_units INT,
                               application_date_indicator INT,
                               FOREIGN KEY (action_taken) REFERENCES actions_taken(action_taken),
                               FOREIGN KEY (agency_code) REFERENCES agencies(agency_code),
                               FOREIGN KEY (application_date_indicator) REFERENCES application_date_indicators(application_date_indicator),
+                              FOREIGN KEY (aus_1) REFERENCES auss(aus),
+                              FOREIGN KEY (aus_2) REFERENCES auss(aus),
+                              FOREIGN KEY (aus_3) REFERENCES auss(aus),
+                              FOREIGN KEY (aus_4) REFERENCES auss(aus),
+                              FOREIGN KEY (aus_5) REFERENCES auss(aus),
+                              FOREIGN KEY (balloon_payment) REFERENCES balloon_payments(balloon_payment),
+                              FOREIGN KEY (business_or_commercial_purpose) REFERENCES business_or_commercial_purposes(business_or_commercial_purpose),
+                              FOREIGN KEY (construction_method) REFERENCES construction_methods(construction_method),
+                              FOREIGN KEY (applicant_credit_score_type) REFERENCES credit_score_types(credit_score_type),
+                              FOREIGN KEY (co_applicant_credit_score_type) REFERENCES credit_score_types(credit_score_type),
                               FOREIGN KEY (state_code, county_code) REFERENCES counties(state_code, county_code),
                               FOREIGN KEY (denial_reason_1) REFERENCES denial_reasons(denial_reason),
                               FOREIGN KEY (denial_reason_2) REFERENCES denial_reasons(denial_reason),
                               FOREIGN KEY (denial_reason_3) REFERENCES denial_reasons(denial_reason),
+                              FOREIGN KEY (denial_reason_4) REFERENCES denial_reasons(denial_reason),
                               FOREIGN KEY (edit_status) REFERENCES edit_statuses(edit_status),
                               FOREIGN KEY (applicant_ethnicity) REFERENCES ethnicities(ethnicity),
                               FOREIGN KEY (co_applicant_ethnicity) REFERENCES ethnicities(ethnicity),
                               FOREIGN KEY (hoepa_status) REFERENCES hoepa_statuses(hoepa_status),
+                              FOREIGN KEY (initially_payable_to_institution) REFERENCES initially_payable_to_institutions(initially_payable_to_institution),
+                              FOREIGN KEY (interest_only_payment) REFERENCES interest_only_payments(interest_only_payment),
                               FOREIGN KEY (lien_status) REFERENCES lien_statuses(lien_status),
                               FOREIGN KEY (loan_purpose) REFERENCES loan_purposes(loan_purpose),
                               FOREIGN KEY (loan_type) REFERENCES loan_types(loan_type),
                               FOREIGN KEY (msamd) REFERENCES msamds(msamd),
+                              FOREIGN KEY (negative_amortization) REFERENCES negative_amortizations(negative_amortization),
+                              FOREIGN KEY (occupancy_type) REFERENCES occupancy_types(occupancy_type),
+                              FOREIGN KEY (open_end_line_of_credit) REFERENCES open_end_locs(open_end_line_of_credit),
+                              FOREIGN KEY (other_nonamortizing_features) REFERENCES other_nonamortizing_features(other_nonamortizing_features),
                               FOREIGN KEY (owner_occupancy) REFERENCES owner_occupancies(owner_occupancy),
                               FOREIGN KEY (preapproval) REFERENCES preapprovals(preapproval),
                               FOREIGN KEY (property_type) REFERENCES property_types(property_type),
@@ -599,14 +965,395 @@ dbClearResult(
                               FOREIGN KEY (co_applicant_race_3) REFERENCES races(race),
                               FOREIGN KEY (co_applicant_race_4) REFERENCES races(race),
                               FOREIGN KEY (co_applicant_race_5) REFERENCES races(race),
+                              FOREIGN KEY (reverse_mortgage) REFERENCES reverse_mortgages(reverse_mortgage),
                               FOREIGN KEY (applicant_sex) REFERENCES sexes(sex),
                               FOREIGN KEY (co_applicant_sex) REFERENCES sexes(sex),
-                              FOREIGN KEY (state_code) REFERENCES states(state_code));")
+                              FOREIGN KEY (state_code) REFERENCES states(state_code),
+                              FOREIGN KEY (submission_of_application) REFERENCES submission_of_applications(submission_of_application));")
   )
 )
 
-# TODO: Add columns, foreign keys, (primary key) from 2018+ format
-# TODO: Ingest data -> replace NA with NULL
+
+# Column mapping from post-2017
+hmda_lar_2018 <- hmda_lar_2018 |>
+  rename("as_of_year" = "activity_year",
+         "respondent_id" = "lei",
+         "msamd" = "derived_msa-md",
+         "state_abbr" = "state_code",
+         "census_tract_number" = "census_tract",
+         "open_end_line_of_credit" = "open-end_line_of_credit",
+         "loan_amount_000s" = "loan_amount",
+         "applicant_income_000s" = "income",
+         "co_applicant_credit_score_type" = "co-applicant_credit_score_type",
+         "applicant_ethnicity" = "applicant_ethnicity-1",
+         "applicant_ethnicity_2" = "applicant_ethnicity-2",
+         "applicant_ethnicity_3" = "applicant_ethnicity-3",
+         "applicant_ethnicity_4" = "applicant_ethnicity-4",
+         "applicant_ethnicity_5" = "applicant_ethnicity-5",
+         "co_applicant_ethnicity" = "co-applicant_ethnicity-1",
+         "co_applicant_ethnicity_2" = "co-applicant_ethnicity-2",
+         "co_applicant_ethnicity_3" = "co-applicant_ethnicity-3",
+         "co_applicant_ethnicity_4" = "co-applicant_ethnicity-4",
+         "co_applicant_ethnicity_5" = "co-applicant_ethnicity-5",
+         "co_applicant_ethnicity_observed" = "co-applicant_ethnicity_observed",
+         "applicant_race_1" = "applicant_race-1",
+         "applicant_race_2" = "applicant_race-2",
+         "applicant_race_3" = "applicant_race-3",
+         "applicant_race_4" = "applicant_race-4",
+         "applicant_race_5" = "applicant_race-5",
+         "co_applicant_race_1" = "co-applicant_race-1",
+         "co_applicant_race_2" = "co-applicant_race-2",
+         "co_applicant_race_3" = "co-applicant_race-3",
+         "co_applicant_race_4" = "co-applicant_race-4",
+         "co_applicant_race_5" = "co-applicant_race-5",
+         "co_applicant_race_observed" = "co-applicant_race_observed",
+         "co_applicant_sex" = "co-applicant_sex",
+         "co_applicant_sex_observed" = "co-applicant_sex_observed",
+         "co_applicant_age" = "co-applicant_age",
+         "co_applicant_age_above_62" = "co-applicant_age_above_62",
+         "aus_1" = "aus-1",
+         "aus_2" = "aus-2",
+         "aus_3" = "aus-3",
+         "aus_4" = "aus-4",
+         "aus_5" = "aus-5",
+         "denial_reason_1" = "denial_reason-1",
+         "denial_reason_2" = "denial_reason-2",
+         "denial_reason_3" = "denial_reason-3",
+         "denial_reason_4" = "denial_reason-4",
+         "population" = "tract_population",
+         "minority_population" = "tract_minority_population_percent",
+         "hud_median_family_income" = "ffiec_msa_md_median_family_income",
+         "tract_to_msamd_income" = "tract_to_msa_income_percentage",
+         "number_of_owner_occupied_units" = "tract_owner_occupied_units",
+         "number_of_1_to_4_family_units" = "tract_one_to_four_family_homes"
+  )
+
+
+# Add empty columns to pre-2017
+pre_2017_adj <- function(df){
+  eval(parse(text = paste0(
+    df, "$conforming_loan_limit <<- NA;",
+    df, "$reverse_mortgage <<- NA;",
+    df, "$open_end_line_of_credit <<- NA;",
+    df, "$business_or_commercial_purpose <<- NA;",
+    df, "$loan_to_value_ratio <<- NA;",
+    df, "$interest_rate <<- NA;",
+    df, "$total_loan_costs <<- NA;",
+    df, "$total_points_and_fees <<- NA;",
+    df, "$origination_charges <<- NA;",
+    df, "$discount_points <<- NA;",
+    df, "$lender_credits <<- NA;",
+    df, "$loan_term <<- NA;",
+    df, "$prepayment_penalty_term <<- NA;",
+    df, "$intro_rate_period <<- NA;",
+    df, "$negative_amortization <<- NA;",
+    df, "$interest_only_payment <<- NA;",
+    df, "$balloon_payment <<- NA;",
+    df, "$other_nonamortizing_features <<- NA;",
+    df, "$property_value <<- NA;",
+    df, "$construction_method <<- NA;",
+    df, "$occupancy_type <<- NA;",
+    df, "$total_units <<- NA;",
+    df, "$debt_to_income_ratio <<- NA;",
+    df, "$applicant_credit_score_type <<- NA;",
+    df, "$co_applicant_credit_score_type <<- NA;",
+    df, "$applicant_age <<- NA;",
+    df, "$co_applicant_age <<- NA;",
+    df, "$applicant_age_above_62 <<- NA;",
+    df, "$co_applicant_age_above_62 <<- NA;",
+    df, "$submission_of_application <<- NA;",
+    df, "$initially_payable_to_institution <<- NA;",
+    df, "$aus_1 <<- NA;",
+    df, "$aus_2 <<- NA;",
+    df, "$aus_3 <<- NA;",
+    df, "$aus_4 <<- NA;",
+    df, "$aus_5 <<- NA;",
+    df, "$denial_reason_4 <<- NA;",
+    df, "$tract_median_age_of_housing_units <<- NA;"
+  )))
+}
+
+
+# Adjust post-2017 to pre-2017 conventions
+post_2017_adj <- function(df){
+  eval(parse(text = paste0(
+    df, "$loan_amount_000s <<- ", df, "$loan_amount_000s / 1e3;",
+    df, "$applicant_income_000s <<- ", df, "$applicant_income_000s / 1e3;",
+    
+    df, "$state_code <<- as.integer(substr(", df, "$county_code, 1, 2));",
+    df, "$county_code <<- as.integer(substr(", df, "$county_code, 3, 5));",
+    df, "$state_abbr <<- NULL;",
+    
+    df, "$property_type <<- ifelse(", df, "$derived_dwelling_category == 'Single Family (1-4 Units):Site-Built', 1, ifelse(", df, "$derived_dwelling_category %in% c('Single Family (1-4 Units):Manufactured', 'Multifamily:Manufactured (5+ Units)'), 2, ifelse(", df, "$derived_dwelling_category == 'Multifamily:Site-Built (5+ Units)', 3, NA)));",
+    
+    df, "$owner_occupancy <<- ifelse(", df, "$occupancy_type == 1, 1, ifelse(", df, "$occupancy_type %in% c(2, 3), 2, NA));",
+    
+    df, "$agency_code <<- NA;",
+    
+    df, "$edit_status <<- NA;",
+    
+    df, "$sequence_number <<- NA;",
+    
+    df, "$application_date_indicator <<- 0;",
+    
+    df, "$loan_to_value_ratio <<- ifelse(", df, "$loan_to_value_ratio == 'Exempt', -1111, as.numeric(", df, "$loan_to_value_ratio));",
+    df, "$interest_rate <<- ifelse(", df, "$interest_rate == 'Exempt', -1111, as.numeric(", df, "$interest_rate));",
+    df, "$rate_spread <<- ifelse(", df, "$rate_spread == 'Exempt', -1111, as.numeric(", df, "$rate_spread));",
+    df, "$total_loan_costs <<- ifelse(", df, "$total_loan_costs == 'Exempt', -1111, as.numeric(", df, "$total_loan_costs));",
+    df, "$total_points_and_fees <<- ifelse(", df, "$total_points_and_fees == 'Exempt', -1111, as.numeric(", df, "$total_points_and_fees));",
+    df, "$origination_charges <<- ifelse(", df, "$origination_charges == 'Exempt', -1111, as.numeric(", df, "$origination_charges));",
+    df, "$discount_points <<- ifelse(", df, "$discount_points == 'Exempt', -1111, as.numeric(", df, "$discount_points));",
+    df, "$lender_credits <<- ifelse(", df, "$lender_credits == 'Exempt', -1111, as.numeric(", df, "$lender_credits));",
+    
+    df, "$loan_term <<- ifelse(", df, "$loan_term == 'Exempt', -1111, as.integer(", df, "$loan_term));",
+    df, "$prepayment_penalty_term <<- ifelse(", df, "$prepayment_penalty_term == 'Exempt', -1111, as.integer(", df, "$prepayment_penalty_term));",
+    df, "$intro_rate_period <<- ifelse(", df, "$intro_rate_period == 'Exempt', -1111, as.integer(", df, "$intro_rate_period));",
+    df, "$property_value <<- ifelse(", df, "$property_value == 'Exempt', -1111, as.integer(", df, "$property_value));"
+  )))
+}
+
+
+
+
+# Ingest data
+hmda_ingest <- function(ingest_row){
+  ingest_row[as.vector(sapply(ingest_row, function(x){typeof(x) == "character"}))] <- as.list(paste0("'", ingest_row[as.vector(sapply(ingest_row, function(x){typeof(x) == "character"}))], "'"))
+  ingest_row[as.vector(is.na(ingest_row))] <- "NULL"
+  
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO main VALUES (",
+                                ingest_row$as_of_year, ", ",
+                                ingest_row$respondent_id, ", ",
+                                ingest_row$agency_code, ", ",
+                                ingest_row$conforming_loan_limit, ", ",
+                                ingest_row$reverse_mortgage, ", ",
+                                ingest_row$open_end_line_of_credit, ", ",
+                                ingest_row$business_or_commercial_purpose, ", ",
+                                ingest_row$loan_type, ", ",
+                                ingest_row$property_type, ", ",
+                                ingest_row$loan_purpose, ", ",
+                                ingest_row$owner_occupancy, ", ",
+                                ingest_row$loan_amount_000s, ", ",
+                                ingest_row$loan_to_value_ratio, ", ",
+                                ingest_row$interest_rate, ", ",
+                                ingest_row$rate_spread, ", ",
+                                ingest_row$total_loan_costs, ", ",
+                                ingest_row$total_points_and_fees, ", ",
+                                ingest_row$origination_charges, ", ",
+                                ingest_row$discount_points, ", ",
+                                ingest_row$lender_credits, ", ",
+                                ingest_row$loan_term, ", ",
+                                ingest_row$prepayment_penalty_term, ", ",
+                                ingest_row$intro_rate_period, ", ",
+                                ingest_row$negative_amortization, ", ",
+                                ingest_row$interest_only_payment, ", ",
+                                ingest_row$balloon_payment, ", ",
+                                ingest_row$other_nonamortizing_features, ", ",
+                                ingest_row$property_value, ", ",
+                                ingest_row$construction_method, ", ",
+                                ingest_row$occupancy_type, ", ",
+                                ingest_row$total_units, ", ",
+                                ingest_row$debt_to_income_ratio, ", ",
+                                ingest_row$applicant_credit_score_type, ", ",
+                                ingest_row$co_applicant_credit_score_type, ", ",
+                                ingest_row$preapproval, ", ",
+                                ingest_row$action_taken, ", ",
+                                ingest_row$msamd, ", ",
+                                ingest_row$state_code, ", ",
+                                ingest_row$county_code, ", ",
+                                ingest_row$census_tract_number, ", ",
+                                ingest_row$applicant_ethnicity, ", ",
+                                ingest_row$co_applicant_ethnicity, ", ",
+                                ingest_row$applicant_race_1, ", ",
+                                ingest_row$applicant_race_2, ", ",
+                                ingest_row$applicant_race_3, ", ",
+                                ingest_row$applicant_race_4, ", ",
+                                ingest_row$applicant_race_5, ", ",
+                                ingest_row$co_applicant_race_1, ", ",
+                                ingest_row$co_applicant_race_2, ", ",
+                                ingest_row$co_applicant_race_3, ", ",
+                                ingest_row$co_applicant_race_4, ", ",
+                                ingest_row$co_applicant_race_5, ", ",
+                                ingest_row$applicant_sex, ", ",
+                                ingest_row$co_applicant_sex, ", ",
+                                ingest_row$applicant_age, ", ",
+                                ingest_row$co_applicant_age, ", ",
+                                ingest_row$applicant_age_above_62, ", ",
+                                ingest_row$co_applicant_age_above_62, ", ",
+                                ingest_row$submission_of_application, ", ",
+                                ingest_row$initially_payable_to_institution, ", ",
+                                ingest_row$aus_1, ", ",
+                                ingest_row$aus_2, ", ",
+                                ingest_row$aus_3, ", ",
+                                ingest_row$aus_4, ", ",
+                                ingest_row$aus_5, ", ",
+                                ingest_row$applicant_income_000s, ", ",
+                                ingest_row$purchaser_type, ", ",
+                                ingest_row$denial_reason_1, ", ",
+                                ingest_row$denial_reason_2, ", ",
+                                ingest_row$denial_reason_3, ", ",
+                                ingest_row$denial_reason_4, ", ",
+                                ingest_row$hoepa_status, ", ",
+                                ingest_row$lien_status, ", ",
+                                ingest_row$edit_status, ", ",
+                                ingest_row$sequence_number, ", ",
+                                ingest_row$population, ", ",
+                                ingest_row$minority_population, ", ",
+                                ingest_row$hud_median_family_income, ", ",
+                                ingest_row$tract_to_msamd_income, ", ",
+                                ingest_row$number_of_owner_occupied_units, ", ",
+                                ingest_row$number_of_1_to_4_family_units, ", ",
+                                ingest_row$tract_median_age_of_housing_units, ", ",
+                                ingest_row$application_date_indicator,
+                                ");"))
+  )
+}
+
+
+# Run ingest
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2007_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2007")
+for (i in 1:nrow(hmda_lar_2007)){
+  hmda_ingest(hmda_lar_2007[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2007)))
+}
+rm(hmda_lar_2007)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2008_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2008")
+for (i in 1:nrow(hmda_lar_2008)){
+  hmda_ingest(hmda_lar_2008[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2008)))
+}
+rm(hmda_lar_2008)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2009_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2009")
+for (i in 1:nrow(hmda_lar_2009)){
+  hmda_ingest(hmda_lar_2009[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2009)))
+}
+rm(hmda_lar_2009)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2010_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2010")
+for (i in 1:nrow(hmda_lar_2010)){
+  hmda_ingest(hmda_lar_2010[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2010)))
+}
+rm(hmda_lar_2010)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2011_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2011")
+for (i in 1:nrow(hmda_lar_2011)){
+  hmda_ingest(hmda_lar_2011[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2011)))
+}
+rm(hmda_lar_2011)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2012_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2012")
+for (i in 1:nrow(hmda_lar_2012)){
+  hmda_ingest(hmda_lar_2012[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2012)))
+}
+rm(hmda_lar_2012)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2013_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2013")
+for (i in 1:nrow(hmda_lar_2013)){
+  hmda_ingest(hmda_lar_2013[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2013)))
+}
+rm(hmda_lar_2013)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2014_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2014")
+for (i in 1:nrow(hmda_lar_2014)){
+  hmda_ingest(hmda_lar_2014[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2014)))
+}
+rm(hmda_lar_2014)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2015_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2015")
+for (i in 1:nrow(hmda_lar_2015)){
+  hmda_ingest(hmda_lar_2015[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2015)))
+}
+rm(hmda_lar_2015)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2016_nationwide_all.RData")
+pre_2017_adj("hmda_lar_2016")
+for (i in 1:nrow(hmda_lar_2016)){
+  hmda_ingest(hmda_lar_2016[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2016)))
+}
+rm(hmda_lar_2016)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2017_nationwide_all.RData")
+post_2017_adj("hmda_lar_2017")
+for (i in 1:nrow(hmda_lar_2017)){
+  hmda_ingest(hmda_lar_2017[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2017)))
+}
+rm(hmda_lar_2017)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2018_nationwide_all.RData")
+post_2017_adj("hmda_lar_2018")
+for (i in 1:nrow(hmda_lar_2018)){
+  hmda_ingest(hmda_lar_2018[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2018)))
+}
+rm(hmda_lar_2018)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2019_nationwide_all.RData")
+post_2017_adj("hmda_lar_2019")
+for (i in 1:nrow(hmda_lar_2019)){
+  hmda_ingest(hmda_lar_2019[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2019)))
+}
+rm(hmda_lar_2019)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2020_nationwide_all.RData")
+post_2017_adj("hmda_lar_2020")
+for (i in 1:nrow(hmda_lar_2020)){
+  hmda_ingest(hmda_lar_2020[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2020)))
+}
+rm(hmda_lar_2020)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2021_nationwide_all.RData")
+post_2017_adj("hmda_lar_2021")
+for (i in 1:nrow(hmda_lar_2021)){
+  hmda_ingest(hmda_lar_2021[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2021)))
+}
+rm(hmda_lar_2021)
+gc()
+
+load("../../3_Data/HMDA LAR/Nationwide records/hmda_2022_nationwide_all.RData")
+post_2017_adj("hmda_lar_2022")
+for (i in 1:nrow(hmda_lar_2022)){
+  hmda_ingest(hmda_lar_2022[i, ])
+  print(paste0(i, "/", nrow(hmda_lar_2022)))
+}
+rm(hmda_lar_2022)
+gc()
 
 
 dbDisconnect(hmda_db)
