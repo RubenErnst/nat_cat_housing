@@ -877,7 +877,15 @@ dbClearResult(
                               county_code INT,
                               census_tract_number VARCHAR(7),
                               applicant_ethnicity INT,
+                              applicant_ethnicity_2 INT,
+                              applicant_ethnicity_3 INT,
+                              applicant_ethnicity_4 INT,
+                              applicant_ethnicity_5 INT,
                               co_applicant_ethnicity INT,
+                              co_applicant_ethnicity_2 INT,
+                              co_applicant_ethnicity_3 INT,
+                              co_applicant_ethnicity_4 INT,
+                              co_applicant_ethnicity_5 INT,
                               applicant_race_1 INT,
                               applicant_race_2 INT,
                               applicant_race_3 INT,
@@ -939,7 +947,15 @@ dbClearResult(
                               FOREIGN KEY (denial_reason_4) REFERENCES denial_reasons(denial_reason),
                               FOREIGN KEY (edit_status) REFERENCES edit_statuses(edit_status),
                               FOREIGN KEY (applicant_ethnicity) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (applicant_ethnicity_2) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (applicant_ethnicity_3) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (applicant_ethnicity_4) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (applicant_ethnicity_5) REFERENCES ethnicities(ethnicity),
                               FOREIGN KEY (co_applicant_ethnicity) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (co_applicant_ethnicity_2) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (co_applicant_ethnicity_3) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (co_applicant_ethnicity_4) REFERENCES ethnicities(ethnicity),
+                              FOREIGN KEY (co_applicant_ethnicity_5) REFERENCES ethnicities(ethnicity),
                               FOREIGN KEY (hoepa_status) REFERENCES hoepa_statuses(hoepa_status),
                               FOREIGN KEY (initially_payable_to_institution) REFERENCES initially_payable_to_institutions(initially_payable_to_institution),
                               FOREIGN KEY (interest_only_payment) REFERENCES interest_only_payments(interest_only_payment),
@@ -972,61 +988,6 @@ dbClearResult(
                               FOREIGN KEY (submission_of_application) REFERENCES submission_of_applications(submission_of_application));")
   )
 )
-
-
-# Column mapping from post-2017
-hmda_lar_2018 <- hmda_lar_2018 |>
-  rename("as_of_year" = "activity_year",
-         "respondent_id" = "lei",
-         "msamd" = "derived_msa-md",
-         "state_abbr" = "state_code",
-         "census_tract_number" = "census_tract",
-         "open_end_line_of_credit" = "open-end_line_of_credit",
-         "loan_amount_000s" = "loan_amount",
-         "applicant_income_000s" = "income",
-         "co_applicant_credit_score_type" = "co-applicant_credit_score_type",
-         "applicant_ethnicity" = "applicant_ethnicity-1",
-         "applicant_ethnicity_2" = "applicant_ethnicity-2",
-         "applicant_ethnicity_3" = "applicant_ethnicity-3",
-         "applicant_ethnicity_4" = "applicant_ethnicity-4",
-         "applicant_ethnicity_5" = "applicant_ethnicity-5",
-         "co_applicant_ethnicity" = "co-applicant_ethnicity-1",
-         "co_applicant_ethnicity_2" = "co-applicant_ethnicity-2",
-         "co_applicant_ethnicity_3" = "co-applicant_ethnicity-3",
-         "co_applicant_ethnicity_4" = "co-applicant_ethnicity-4",
-         "co_applicant_ethnicity_5" = "co-applicant_ethnicity-5",
-         "co_applicant_ethnicity_observed" = "co-applicant_ethnicity_observed",
-         "applicant_race_1" = "applicant_race-1",
-         "applicant_race_2" = "applicant_race-2",
-         "applicant_race_3" = "applicant_race-3",
-         "applicant_race_4" = "applicant_race-4",
-         "applicant_race_5" = "applicant_race-5",
-         "co_applicant_race_1" = "co-applicant_race-1",
-         "co_applicant_race_2" = "co-applicant_race-2",
-         "co_applicant_race_3" = "co-applicant_race-3",
-         "co_applicant_race_4" = "co-applicant_race-4",
-         "co_applicant_race_5" = "co-applicant_race-5",
-         "co_applicant_race_observed" = "co-applicant_race_observed",
-         "co_applicant_sex" = "co-applicant_sex",
-         "co_applicant_sex_observed" = "co-applicant_sex_observed",
-         "co_applicant_age" = "co-applicant_age",
-         "co_applicant_age_above_62" = "co-applicant_age_above_62",
-         "aus_1" = "aus-1",
-         "aus_2" = "aus-2",
-         "aus_3" = "aus-3",
-         "aus_4" = "aus-4",
-         "aus_5" = "aus-5",
-         "denial_reason_1" = "denial_reason-1",
-         "denial_reason_2" = "denial_reason-2",
-         "denial_reason_3" = "denial_reason-3",
-         "denial_reason_4" = "denial_reason-4",
-         "population" = "tract_population",
-         "minority_population" = "tract_minority_population_percent",
-         "hud_median_family_income" = "ffiec_msa_md_median_family_income",
-         "tract_to_msamd_income" = "tract_to_msa_income_percentage",
-         "number_of_owner_occupied_units" = "tract_owner_occupied_units",
-         "number_of_1_to_4_family_units" = "tract_one_to_four_family_homes"
-  )
 
 
 # Add empty columns to pre-2017
@@ -1077,6 +1038,8 @@ pre_2017_adj <- function(df){
 # Adjust post-2017 to pre-2017 conventions
 post_2017_adj <- function(df){
   eval(parse(text = paste0(
+    df, " <<- rename(", df, ", 'as_of_year' = 'activity_year', 'respondent_id' = 'lei', 'msamd' = 'derived_msa-md', 'state_abbr' = 'state_code', 'census_tract_number' = 'census_tract', 'open_end_line_of_credit' = 'open-end_line_of_credit', 'loan_amount_000s' = 'loan_amount', 'applicant_income_000s' = 'income', 'co_applicant_credit_score_type' = 'co-applicant_credit_score_type', 'applicant_ethnicity' = 'applicant_ethnicity-1', 'applicant_ethnicity_2' = 'applicant_ethnicity-2', 'applicant_ethnicity_3' = 'applicant_ethnicity-3', 'applicant_ethnicity_4' = 'applicant_ethnicity-4', 'applicant_ethnicity_5' = 'applicant_ethnicity-5', 'co_applicant_ethnicity' = 'co-applicant_ethnicity-1', 'co_applicant_ethnicity_2' = 'co-applicant_ethnicity-2', 'co_applicant_ethnicity_3' = 'co-applicant_ethnicity-3', 'co_applicant_ethnicity_4' = 'co-applicant_ethnicity-4', 'co_applicant_ethnicity_5' = 'co-applicant_ethnicity-5', 'co_applicant_ethnicity_observed' = 'co-applicant_ethnicity_observed', 'applicant_race_1' = 'applicant_race-1', 'applicant_race_2' = 'applicant_race-2', 'applicant_race_3' = 'applicant_race-3', 'applicant_race_4' = 'applicant_race-4', 'applicant_race_5' = 'applicant_race-5', 'co_applicant_race_1' = 'co-applicant_race-1', 'co_applicant_race_2' = 'co-applicant_race-2', 'co_applicant_race_3' = 'co-applicant_race-3', 'co_applicant_race_4' = 'co-applicant_race-4', 'co_applicant_race_5' = 'co-applicant_race-5', 'co_applicant_race_observed' = 'co-applicant_race_observed', 'co_applicant_sex' = 'co-applicant_sex', 'co_applicant_sex_observed' = 'co-applicant_sex_observed', 'co_applicant_age' = 'co-applicant_age', 'co_applicant_age_above_62' = 'co-applicant_age_above_62', 'aus_1' = 'aus-1', 'aus_2' = 'aus-2', 'aus_3' = 'aus-3', 'aus_4' = 'aus-4', 'aus_5' = 'aus-5', 'denial_reason_1' = 'denial_reason-1', 'denial_reason_2' = 'denial_reason-2', 'denial_reason_3' = 'denial_reason-3', 'denial_reason_4' = 'denial_reason-4', 'population' = 'tract_population', 'minority_population' = 'tract_minority_population_percent', 'hud_median_family_income' = 'ffiec_msa_md_median_family_income', 'tract_to_msamd_income' = 'tract_to_msa_income_percentage', 'number_of_owner_occupied_units' = 'tract_owner_occupied_units', 'number_of_1_to_4_family_units' = 'tract_one_to_four_family_homes');",
+    
     df, "$loan_amount_000s <<- ", df, "$loan_amount_000s / 1e3;",
     df, "$applicant_income_000s <<- ", df, "$applicant_income_000s / 1e3;",
     
@@ -1215,7 +1178,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2007_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2007")
 for (i in 1:nrow(hmda_lar_2007)){
   hmda_ingest(hmda_lar_2007[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2007)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2007)))
+  }
 }
 rm(hmda_lar_2007)
 gc()
@@ -1224,7 +1189,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2008_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2008")
 for (i in 1:nrow(hmda_lar_2008)){
   hmda_ingest(hmda_lar_2008[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2008)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2008)))
+  }
 }
 rm(hmda_lar_2008)
 gc()
@@ -1233,7 +1200,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2009_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2009")
 for (i in 1:nrow(hmda_lar_2009)){
   hmda_ingest(hmda_lar_2009[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2009)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2009)))
+  }
 }
 rm(hmda_lar_2009)
 gc()
@@ -1242,7 +1211,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2010_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2010")
 for (i in 1:nrow(hmda_lar_2010)){
   hmda_ingest(hmda_lar_2010[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2010)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2010)))
+  }
 }
 rm(hmda_lar_2010)
 gc()
@@ -1251,7 +1222,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2011_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2011")
 for (i in 1:nrow(hmda_lar_2011)){
   hmda_ingest(hmda_lar_2011[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2011)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2011)))
+  }
 }
 rm(hmda_lar_2011)
 gc()
@@ -1260,7 +1233,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2012_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2012")
 for (i in 1:nrow(hmda_lar_2012)){
   hmda_ingest(hmda_lar_2012[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2012)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2012)))
+  }
 }
 rm(hmda_lar_2012)
 gc()
@@ -1269,7 +1244,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2013_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2013")
 for (i in 1:nrow(hmda_lar_2013)){
   hmda_ingest(hmda_lar_2013[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2013)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2013)))
+  }
 }
 rm(hmda_lar_2013)
 gc()
@@ -1278,7 +1255,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2014_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2014")
 for (i in 1:nrow(hmda_lar_2014)){
   hmda_ingest(hmda_lar_2014[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2014)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2014)))
+  }
 }
 rm(hmda_lar_2014)
 gc()
@@ -1287,7 +1266,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2015_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2015")
 for (i in 1:nrow(hmda_lar_2015)){
   hmda_ingest(hmda_lar_2015[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2015)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2015)))
+  }
 }
 rm(hmda_lar_2015)
 gc()
@@ -1296,16 +1277,20 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2016_nationwide_all.RData")
 pre_2017_adj("hmda_lar_2016")
 for (i in 1:nrow(hmda_lar_2016)){
   hmda_ingest(hmda_lar_2016[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2016)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2016)))
+  }
 }
 rm(hmda_lar_2016)
 gc()
 
 load("../../3_Data/HMDA LAR/Nationwide records/hmda_2017_nationwide_all.RData")
-post_2017_adj("hmda_lar_2017")
+pre_2017_adj("hmda_lar_2017")
 for (i in 1:nrow(hmda_lar_2017)){
   hmda_ingest(hmda_lar_2017[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2017)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2017)))
+  }
 }
 rm(hmda_lar_2017)
 gc()
@@ -1314,7 +1299,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2018_nationwide_all.RData")
 post_2017_adj("hmda_lar_2018")
 for (i in 1:nrow(hmda_lar_2018)){
   hmda_ingest(hmda_lar_2018[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2018)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2018)))
+  }
 }
 rm(hmda_lar_2018)
 gc()
@@ -1323,7 +1310,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2019_nationwide_all.RData")
 post_2017_adj("hmda_lar_2019")
 for (i in 1:nrow(hmda_lar_2019)){
   hmda_ingest(hmda_lar_2019[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2019)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2019)))
+  }
 }
 rm(hmda_lar_2019)
 gc()
@@ -1332,7 +1321,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2020_nationwide_all.RData")
 post_2017_adj("hmda_lar_2020")
 for (i in 1:nrow(hmda_lar_2020)){
   hmda_ingest(hmda_lar_2020[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2020)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2020)))
+  }
 }
 rm(hmda_lar_2020)
 gc()
@@ -1341,7 +1332,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2021_nationwide_all.RData")
 post_2017_adj("hmda_lar_2021")
 for (i in 1:nrow(hmda_lar_2021)){
   hmda_ingest(hmda_lar_2021[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2021)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2021)))
+  }
 }
 rm(hmda_lar_2021)
 gc()
@@ -1350,7 +1343,9 @@ load("../../3_Data/HMDA LAR/Nationwide records/hmda_2022_nationwide_all.RData")
 post_2017_adj("hmda_lar_2022")
 for (i in 1:nrow(hmda_lar_2022)){
   hmda_ingest(hmda_lar_2022[i, ])
-  print(paste0(i, "/", nrow(hmda_lar_2022)))
+  if (i %% 500 == 0){
+    print(paste0(i, "/", nrow(hmda_lar_2022)))
+  }
 }
 rm(hmda_lar_2022)
 gc()
