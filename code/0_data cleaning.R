@@ -123,8 +123,8 @@ names(fema_summaries) <- c("disaster_number", "number_ia_approved", "amount_ihp_
 fema_summaries$date_ia_load <- as.Date(as.character(fema_summaries$date_ia_load))
 fema_summaries$date_pa_load <- as.Date(as.character(fema_summaries$date_pa_load))
 
-fema <- merge(select(fema_areas, -id, -hash, -last_refresh), select(fema_declarations, -state_name, -id, -hash, -last_refresh), by = c("disaster_number", "state_code"), all.x = T)
-fema <- merge(fema, select(fema_summaries, -id, -hash, -last_refresh), by = "disaster_number", all.x = T)
+fema <- merge(select(fema_areas, -id, -hash, -last_refresh), select(fema_declarations, -state_name, -id, -hash, -last_refresh), by = c("disaster_number", "state_code"), all.x = TRUE)
+fema <- merge(fema, select(fema_summaries, -id, -hash, -last_refresh), by = "disaster_number", all.x = TRUE)
 
 # Save to compressed binary
 save(fema, file = "data/fema.RData")
@@ -1352,3 +1352,114 @@ gc()
 
 
 dbDisconnect(hmda_db)
+
+
+
+### Load NRI data
+nri_counties <- read_csv("../../3_Data/NRI_Table_Counties/NRI_Table_Counties.csv")
+nri_tribal <- read_csv("../../3_Data/NRI_Table_Tribal_Counties/NRI_Table_Tribal_Counties.csv") |> 
+  select(-names(nri_tribal)[!names(nri_tribal) %in% names(nri_counties)])
+
+# Adjust column names for pivot with automatic name coercion
+names(nri_counties)[sapply(names(nri_counties), function(x){length(unlist(str_extract_all(x, "_"))) > 1})] <- str_replace(str_replace(names(nri_counties)[sapply(names(nri_counties), function(x){length(unlist(str_extract_all(x, "_"))) > 1})], "EXP_AREA", "EXPAREA"), "ALR_NPCTL", "ALRNPCTL")
+names(nri_tribal)[sapply(names(nri_tribal), function(x){length(unlist(str_extract_all(x, "_"))) > 1})] <- str_replace(str_replace(names(nri_tribal)[sapply(names(nri_tribal), function(x){length(unlist(str_extract_all(x, "_"))) > 1})], "EXP_AREA", "EXPAREA"), "ALR_NPCTL", "ALRNPCTL")
+
+
+nri_composite <- rbind(nri_counties, nri_tribal) |> 
+  select(-STATE, -STATEABBRV, -COUNTY, -STCOFIPS, -NRI_VER) |> 
+  rename("object_id" = "OID_",
+         "nri_id" = "NRI_ID",
+         "state_code" = "STATEFIPS",
+         "county_code" = "COUNTYFIPS",
+         "county_type" = "COUNTYTYPE",
+         "population" = "POPULATION",
+         "building_value" = "BUILDVALUE",
+         "agriculture_value" = "AGRIVALUE",
+         "area" = "AREA",
+         "risk_value_composite" = "RISK_VALUE",
+         "risk_score_composite" = "RISK_SCORE",
+         "risk_rating_composite" = "RISK_RATNG",
+         "risk_stateperc_composite" = "RISK_SPCTL",
+         "eal_score_composite" = "EAL_SCORE",
+         "eal_rating_composite" = "EAL_RATNG",
+         "eal_stateperc_composite" = "EAL_SPCTL",
+         "eal_total_composite" = "EAL_VALT",
+         "eal_building_value_composite" = "EAL_VALB",
+         "eal_population_composite" = "EAL_VALP",
+         "eal_population_equivalence_composite" = "EAL_VALPE",
+         "eal_agriculture_value_composite" = "EAL_VALA",
+         "alr_building_composite" = "ALR_VALB",
+         "alr_population_composite" = "ALR_VALP",
+         "alr_agriculture_composite" = "ALR_VALA",
+         "alr_nationalperc_composite" = "ALR_NPCTL",
+         "alr_sovi_adj_composite" = "ALR_VRA_NPCTL",
+         "sovi_score_composite" = "SOVI_SCORE",
+         "sovi_rating_composite" = "SOVI_RATNG",
+         "sovi_stateperc_composite" = "SOVI_SPCTL",
+         "resl_score_composite" = "RESL_SCORE",
+         "resl_rating_composite" = "RESL_RATNG",
+         "resl_stateperc_composite" = "RESL_SPCTL",
+         "resl_value_composite" = "RESL_VALUE",
+         "comm_risk_factor_composite" = "CRF_VALUE") |> 
+  select(object_id, nri_id, state_code, county_code, county_type, population, building_value, agriculture_value, area, risk_value_composite, risk_score_composite, risk_rating_composite,
+         risk_stateperc_composite, eal_score_composite, eal_rating_composite, eal_stateperc_composite, eal_total_composite, eal_building_value_composite, eal_population_composite,
+         eal_population_equivalence_composite, eal_agriculture_value_composite, alr_building_composite, alr_population_composite, alr_agriculture_composite, alr_nationalperc_composite,
+         alr_sovi_adj_composite, sovi_score_composite, sovi_rating_composite, sovi_stateperc_composite, resl_score_composite, resl_rating_composite, resl_stateperc_composite, resl_value_composite,
+         comm_risk_factor_composite)
+
+nri_counties <- rbind(nri_counties, nri_tribal) |> 
+  select(-STATE, -STATEABBRV, -COUNTY, -STCOFIPS, -NRI_VER) |> 
+  rename("object_id" = "OID_",
+         "nri_id" = "NRI_ID",
+         "state_code" = "STATEFIPS",
+         "county_code" = "COUNTYFIPS",
+         "county_type" = "COUNTYTYPE",
+         "population" = "POPULATION",
+         "building_value" = "BUILDVALUE",
+         "agriculture_value" = "AGRIVALUE",
+         "area" = "AREA",
+         "risk_value_composite" = "RISK_VALUE",
+         "risk_score_composite" = "RISK_SCORE",
+         "risk_rating_composite" = "RISK_RATNG",
+         "risk_stateperc_composite" = "RISK_SPCTL",
+         "eal_score_composite" = "EAL_SCORE",
+         "eal_rating_composite" = "EAL_RATNG",
+         "eal_stateperc_composite" = "EAL_SPCTL",
+         "eal_total_composite" = "EAL_VALT",
+         "eal_building_value_composite" = "EAL_VALB",
+         "eal_population_composite" = "EAL_VALP",
+         "eal_population_equivalence_composite" = "EAL_VALPE",
+         "eal_agriculture_value_composite" = "EAL_VALA",
+         "alr_building_composite" = "ALR_VALB",
+         "alr_population_composite" = "ALR_VALP",
+         "alr_agriculture_composite" = "ALR_VALA",
+         "alr_nationalperc_composite" = "ALR_NPCTL",
+         "alr_sovi_adj_composite" = "ALR_VRA_NPCTL",
+         "sovi_score_composite" = "SOVI_SCORE",
+         "sovi_rating_composite" = "SOVI_RATNG",
+         "sovi_stateperc_composite" = "SOVI_SPCTL",
+         "resl_score_composite" = "RESL_SCORE",
+         "resl_rating_composite" = "RESL_RATNG",
+         "resl_stateperc_composite" = "RESL_SPCTL",
+         "resl_value_composite" = "RESL_VALUE",
+         "comm_risk_factor_composite" = "CRF_VALUE",
+         ) |> 
+  select(-population, -building_value, -agriculture_value, -area, -risk_value_composite, -risk_score_composite, -risk_rating_composite, -risk_stateperc_composite, -eal_score_composite, -eal_rating_composite,
+         -eal_stateperc_composite, -eal_total_composite, -eal_building_value_composite, -eal_population_composite, -eal_population_equivalence_composite, -eal_agriculture_value_composite, -alr_building_composite,
+         -alr_population_composite, -alr_agriculture_composite, -alr_nationalperc_composite, -alr_sovi_adj_composite, -sovi_score_composite, -sovi_rating_composite, -sovi_stateperc_composite, -resl_score_composite,
+         -resl_rating_composite, -resl_stateperc_composite, -resl_value_composite, -comm_risk_factor_composite) |> 
+  pivot_longer(cols = c(-object_id, -nri_id, -state_code, -county_code, -county_type),
+               names_to = c("risk_type_abbr", "value_type_abbr"), names_sep = "_", values_to = "value", values_transform = as.character)
+
+# Make risk types more readable
+nri_counties <- merge(nri_counties, data.frame("risk_type_abbr" = c("AVLN", "CFLD", "CWAV", "DRGT", "ERQK", "HAIL", "HWAV", "HRCN", "ISTM", "LNDS", "LTNG", "RFLD", "SWND", "TRND", "TSUN", "VLCN", "WFIR", "WNTW"),
+                                               "risk_type" = c("avalanche", "coastal_flooding", "cold_wave", "drought", "earthquake", "hail", "heat_wave", "hurricane", "ice_storm", "landslide", "lightning", "riverine_flood", "strong_wind", "tornado", "tsunami", "volcanic_activity", "wildfire", "winter_weather")),
+                      by = "risk_type_abbr", all.x = TRUE)
+
+# Make value types more readable
+nri_counties <- merge(nri_counties, data.frame("value_type_abbr" = c("EVNTS", "AFREQ", "EXPAREA", "EXPB", "EXPP", "EXPPE", "EXPT", "HLRB", "HLRP", "HLRR", "EALB", "EALP", "EALPE", "EALT", "EALS", "EALR", "ALRB", "ALRP", "ALRNPCTL", "RISKV", "RISKS", "RISKR", "ALRA", "EXPA", "HLRA", "EALA"),
+                                               "value_type" = c("nr_events", "annualized_freq", "exposure_impacted_area", "exposure_building_value", "exposure_population", "exposure_population_equivalence", "exposure_total", "hlr_buildings", "hlr_population", "hlr_rating", "eal_building_value", "eal_population", "eal_population_equivalence", "eal_total", "eal_score", "eal_rating", "alr_building_value", "alr_population", "alr_nationalperc", "risk_value", "risk_score", "risk_rating", "alr_agriculture", "exposure_agriculture", "hlr_agriculture", "eal_agriculture")),
+                      by = "value_type_abbr", all.x = TRUE)
+
+# Save to binary
+save(nri_counties, nri_composite, file = "data/nri.RData")
