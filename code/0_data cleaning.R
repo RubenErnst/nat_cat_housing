@@ -1355,7 +1355,7 @@ dbDisconnect(hmda_db)
 
 
 
-### Load NRI data
+### Load NRI data ----
 nri_counties <- read_csv("../../3_Data/NRI_Table_Counties/NRI_Table_Counties.csv")
 nri_tribal <- read_csv("../../3_Data/NRI_Table_Tribal_Counties/NRI_Table_Tribal_Counties.csv") |> 
   select(-names(nri_tribal)[!names(nri_tribal) %in% names(nri_counties)])
@@ -1463,3 +1463,23 @@ nri_counties <- merge(nri_counties, data.frame("value_type_abbr" = c("EVNTS", "A
 
 # Save to binary
 save(nri_counties, nri_composite, file = "data/nri.RData")
+
+
+
+
+### BLS data ----
+
+qcew_year <- do.call(rbind, lapply(list.files("../../3_Data/BLS/QCEW/2023.q1-q3.by_area/", pattern = ".csv", recursive = TRUE, full.names = TRUE), function(x){read_csv(x)}))
+qcew <- subset(qcew_year, agglvl_title %in% c("County, Total Covered", "County, Total -- by ownership sector", "County, by Domain -- by ownership sector", "County, by Supersector -- by ownership sector", "County, NAICS Sector -- by ownership sector"))
+
+
+for (y in 2022:1990){
+  eval(parse(text = paste0("qcew_year <- do.call(rbind, lapply(list.files('../../3_Data/BLS/QCEW/", y, ".q1-q4.by_area/', pattern = '.csv', recursive = TRUE, full.names = TRUE), function(x){read_csv(x)}))")))
+  names(qcew_year) <- str_remove(names(qcew_year), "\\.\\.\\.\\d+")
+  qcew <- rbind(qcew,
+                subset(qcew_year, agglvl_title %in% c("County, Total Covered", "County, Total -- by ownership sector", "County, by Domain -- by ownership sector", "County, by Supersector -- by ownership sector", "County, NAICS Sector -- by ownership sector")))
+  gc()
+}
+
+# Save binary
+save(qcew, file = "data/bls_qcew.RData")
