@@ -1469,17 +1469,52 @@ save(nri_counties, nri_composite, file = "data/nri.RData")
 
 ### BLS data ----
 
-qcew_year <- do.call(rbind, lapply(list.files("../../3_Data/BLS/QCEW/2023.q1-q3.by_area/", pattern = ".csv", recursive = TRUE, full.names = TRUE), function(x){read_csv(x)}))
+qcew_year <- do.call(rbind, lapply(list.files("../../3_Data/BLS/QCEW/2023.q1-q3.by_area/", pattern = ".csv", recursive = TRUE, full.names = TRUE), function(x){read_csv(x, show_col_types = FALSE)}))
 qcew <- subset(qcew_year, agglvl_title %in% c("County, Total Covered", "County, Total -- by ownership sector", "County, by Domain -- by ownership sector", "County, by Supersector -- by ownership sector", "County, NAICS Sector -- by ownership sector"))
 
+qcew_data_dict <- openxlsx::read.xlsx("../../3_Data/BLS/QCEW/QCEW data dict.xlsx")
 
+# Check if column naming is consistent for row aggregation
+qcew_name_check <- data.frame(t(qcew_data_dict$field_name))
+names(qcew_name_check) <- qcew_data_dict$field_name
+qcew_name_check$check_year <- NA
+
+for (y in 1990:2023){
+  suppressMessages(eval(parse(text = paste0("qcew_name_check_year <- do.call(rbind, lapply(list.files('../../3_Data/BLS/QCEW/", y, ".q1-q4.by_area/', pattern = '.csv', recursive = TRUE, full.names = TRUE), function(x){names(read_csv(x, show_col_types = FALSE, n_max = 1))}))"))))
+  qcew_name_check_year <- data.frame(qcew_name_check_year)
+  names(qcew_name_check_year) <- qcew_data_dict$field_name
+  qcew_name_check_year$check_year <- y
+  qcew_name_check <- rbind(qcew_name_check, qcew_name_check_year)
+}
+
+qcew_name_check <- qcew_name_check |> 
+  pivot_longer(cols = c(-check_year), names_to = "data_dict_name", values_to = "effective_name")
+
+qcew_name_check <- aggregate(effective_name ~ data_dict_name, qcew_name_check, function(x){paste(unique(x), collapse = ", ")})
+View(qcew_name_check)
+
+# Name check looks fine, enforce data dict naming
+names(qcew) <- qcew_data_dict$field_name
+
+# Read data
 for (y in 2022:1990){
-  eval(parse(text = paste0("qcew_year <- do.call(rbind, lapply(list.files('../../3_Data/BLS/QCEW/", y, ".q1-q4.by_area/', pattern = '.csv', recursive = TRUE, full.names = TRUE), function(x){read_csv(x)}))")))
-  names(qcew_year) <- str_remove(names(qcew_year), "\\.\\.\\.\\d+")
+  start_time <- Sys.time()
+  suppressMessages(eval(parse(text = paste0("qcew_year <- do.call(rbind, lapply(list.files('../../3_Data/BLS/QCEW/", y, ".q1-q4.by_area/', pattern = '.csv', recursive = TRUE, full.names = TRUE), function(x){read_csv(x, show_col_types = FALSE)}))"))))
+  names(qcew_year) <- qcew_data_dict$field_name
   qcew <- rbind(qcew,
                 subset(qcew_year, agglvl_title %in% c("County, Total Covered", "County, Total -- by ownership sector", "County, by Domain -- by ownership sector", "County, by Supersector -- by ownership sector", "County, NAICS Sector -- by ownership sector")))
   gc()
+  print(paste0(y, " -- elapsed time: ", Sys.time() - start_time))
 }
 
 # Save binary
 save(qcew, file = "data/bls_qcew.RData")
+
+
+
+### BLS LAUS ----
+laus <- do.call(rbind, lapply(paste0("../../3_Data/BLS/LAUS/LAUS_county_", 1990:2022, ".xlsx"), function(x){openxlsx::read.xlsx(x, colNames = FALSE, startRow = 7)}))
+names(laus) <- c("laus_code", "state_code", "county_code", "county_name", "year", "labor_force", "employed", "unemployed", "unemployment_rate")
+
+# Save binary
+save(laus, file = "data/bls_laus.xlsx")
