@@ -1518,3 +1518,31 @@ names(laus) <- c("laus_code", "state_code", "county_code", "county_name", "year"
 
 # Save binary
 save(laus, file = "data/bls_laus.xlsx")
+
+
+
+### BEA local GDP data ----
+bea_2017_files <- list.files("../../3_Data/BEA/GDP by County and Metropolitan Area/gdpmetro0918/", pattern = ".csv")
+bea_2017 <- do.call(rbind, lapply(bea_2017_files, function(x){read_csv(file = paste0("../../3_Data/BEA/GDP by County and Metropolitan Area/gdpmetro0918/", x), show_col_types = FALSE)}))
+
+# Clean out redacted, unavailable, and non-meaningful values
+bea_2017 <- pivot_longer(bea_2017, cols = as.character(2001:2017), names_to = "year", names_transform = as.integer, values_to = "gdp_value")
+bea_2017 <- subset(bea_2017, !(is.na(IndustryClassification) & is.na(Description)))
+bea_2001_2017_industries <- unique(select(bea_2017, "industry_id" = "IndustryId", "industry_classification" = "IndustryClassification", "description" = "Description"))
+bea_2017 <- select(bea_2017, "fips_code" = "GeoFIPS", "table_name" = "TableName", "component_name" = "ComponentName", "unit" = "Unit", "industry_id" = "IndustryId", "industry_classification" = "IndustryClassification", "gdp_value", "year")
+bea_2017$gdp_value[bea_2017$gdp_value %in% c("(D)", "(L)", "(NA)", "(NM)")] <- NA
+
+
+bea_2022 <- read_csv(file = "../../3_Data/BEA/GDP by County and Metropolitan Area/CAGDP2/CAGDP2__ALL_AREAS_2017_2022.csv", n_max = 108052)
+
+# Clean out redacted, unavailable, and non-meaningful values
+bea_2022 <- pivot_longer(bea_2022, cols = as.character(2017:2022), names_to = "year", names_transform = as.integer, values_to = "gdp_value")
+bea_2017_2022_industries <- unique(select(bea_2022, "industry_id" = "LineCode", "industry_classification" = "IndustryClassification", "description" = "Description"))
+bea_2022$component_name <- "Gross domestic product (GDP) by county and metropolitan area"
+bea_2022 <- select(bea_2022, "fips_code" = "GeoFIPS", "table_name" = "TableName", "component_name", "unit" = "Unit", "industry_id" = "LineCode", "industry_classification" = "IndustryClassification", "gdp_value", "year")
+bea_2022$gdp_value[bea_2022$gdp_value %in% c("(D)", "(L)", "(NA)", "(NM)")] <- NA
+
+bea <- rbind(bea_2017, bea_2022)
+
+# Save binary
+save(bea, bea_2001_2017_industries, bea_2017_2022_industries, file = "data/bea_gdp.RData")
