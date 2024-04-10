@@ -1517,7 +1517,7 @@ laus <- do.call(rbind, lapply(paste0("../../3_Data/BLS/LAUS/LAUS_county_", 1990:
 names(laus) <- c("laus_code", "state_code", "county_code", "county_name", "year", "labor_force", "employed", "unemployed", "unemployment_rate")
 
 # Save binary
-save(laus, file = "data/bls_laus.xlsx")
+save(laus, file = "data/bls_laus.RData")
 
 
 
@@ -1542,6 +1542,7 @@ bea_2022$component_name <- "Gross domestic product (GDP) by county and metropoli
 bea_2022 <- select(bea_2022, "fips_code" = "GeoFIPS", "table_name" = "TableName", "component_name", "unit" = "Unit", "industry_id" = "LineCode", "industry_classification" = "IndustryClassification", "gdp_value", "year")
 bea_2022$gdp_value[bea_2022$gdp_value %in% c("(D)", "(L)", "(NA)", "(NM)")] <- NA
 
+bea_2017 <- subset(bea_2017, year != 2017)
 bea <- rbind(bea_2017, bea_2022)
 
 # Save binary
