@@ -126,6 +126,15 @@ fema_summaries$date_pa_load <- as.Date(as.character(fema_summaries$date_pa_load)
 fema <- merge(select(fema_areas, -id, -hash, -last_refresh), select(fema_declarations, -state_name, -id, -hash, -last_refresh), by = c("disaster_number", "state_code"), all.x = TRUE)
 fema <- merge(fema, select(fema_summaries, -id, -hash, -last_refresh), by = "disaster_number", all.x = TRUE)
 
+# Fix FIPS codes
+source("code/1_data merging.R")
+fema <- merge(fema, select(fips_states, state_abbr, state_code), by.x = "state_code", by.y = "state_abbr", all.x = TRUE)
+fema$temp_county_code <- sapply(fema$place_code, function(x){substr(as.character(x), max(nchar(as.character(x)) - 3 + 1, 1), nchar(as.character(x)))})
+
+fema$place_code <- fips_pad(fema$state_code.y, fema$temp_county_code)
+fema$state_code.y <- NULL
+fema$temp_county_code <- NULL
+
 # Save to compressed binary
 save(fema, file = "data/fema.RData")
 
