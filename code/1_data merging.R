@@ -6,6 +6,14 @@ fips_states <- openxlsx::read.xlsx("../../3_Data/FCC_FIPS/fips.xlsx", startRow =
 
 fips_counties <- openxlsx::read.xlsx("../../3_Data/FCC_FIPS/fips.xlsx", startRow = 53)
 
+bea_fips_mod <- openxlsx::read.xlsx("../../3_Data/FCC_FIPS/BEA_FIPS_Modifications.xlsx", startRow = 2)
+bea_fips_mod$county_code_bea <- substr(bea_fips_mod$BEA.FIPS, 3, 5)
+bea_fips_mod$county_code <- substr(bea_fips_mod$FIPS, 3, 5)
+bea_fips_mod$state_code <- substr(bea_fips_mod$FIPS, 1, 2)
+fips_counties <- merge(fips_counties,
+                       select(bea_fips_mod, county_code_bea, county_code, state_code),
+                       by = c("state_code", "county_code"), all.x = T)
+fips_counties$county_code_bea[is.na(fips_counties$county_code_bea)] <- fips_counties$county_code[is.na(fips_counties$county_code_bea)]
 
 ### FEMA incident mapping ----
 fema_incident_mapping <- data.frame("incident_type" = c("Flood", "Tornado", "Earthquake", "Severe Storm", "Drought", "Hurricane", "Typhoon", "Fire", "Severe Ice Storm", "Freezing",
