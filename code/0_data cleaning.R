@@ -1556,3 +1556,12 @@ bea <- rbind(bea_2017, bea_2022)
 
 # Save binary
 save(bea, bea_2001_2017_industries, bea_2017_2022_industries, file = "data/bea_gdp.RData")
+
+
+
+### Shape data per county ----
+county_shape <- sf::read_sf(dsn = "../../3_Data/CENSUS_Shapefiles/tl_2023_us_county/")
+county_shape <- sf::st_transform(county_shape, crs = sp::CRS("+proj=longlat"))
+
+# Save binary
+save(county_shape, file = "data/county_shape.RData")
