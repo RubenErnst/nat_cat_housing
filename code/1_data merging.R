@@ -35,3 +35,18 @@ fips_unpad <- function(fips_code){
   return(c(as.integer(substr(fips_code, 1, 2)), as.integer(substr(fips_code, 3, 5))))
 }
 
+plm_results <- function(plm_obj){
+  stopifnot(class(plm_obj)[1] == "plm")
+  summ <- summary(plm_obj)
+  out <- data.frame("variable" = row.names(summ$coefficients),
+                    "estimate" = data.frame(summ$coefficients)[,1],
+                    "std_error" = data.frame(summ$coefficients)[,2],
+                    "t_value" = data.frame(summ$coefficients)[,3],
+                    "p_value" = data.frame(summ$coefficients)[,4])
+  out$model <- plm_obj$call$model
+  out$rsq <- summary(plm_obj)$r.squared[1]
+  out$adj_rsq <- summary(plm_obj)$r.squared[2]
+  out$fstatistic <- summary(plm_obj)$fstatistic$statistic
+  out$fstat_pvalue <- summary(plm_obj)$fstatistic$p.value
+  return(out)
+}
