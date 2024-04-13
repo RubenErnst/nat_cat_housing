@@ -80,7 +80,9 @@ for (sc in unique(zillow_county$state_code_fips)){
 save(fema_panel, file = "data/fema_panel.RData")
 
 
-simple_panel <- merge(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series),
+
+### Number of occurrences ----
+nr_occ_panel <- merge(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series),
                       data.frame("fips_code" = fema_panel$fips_code, "date" = fema_panel$date,
                                  "nr_dis_lag_999" = sapply(fema_panel$dis_lag_999, function(x){length(unique(unlist(str_split(x, ", "))))}),
                                  "nr_dis_lag_0.5" = sapply(fema_panel$dis_lag_0.5, function(x){length(unique(unlist(str_split(x, ", "))))}),
@@ -95,7 +97,47 @@ simple_panel <- merge(data.frame("fips_code" = fips_pad(zillow_county$state_code
                       by = c("fips_code", "date"), all.x = T)
 
 
-simple_fe <- plm(zhvi ~ nr_dis_lag_1 + data_series, data = simple_panel, index = c("fips_code", "date"), model = "within")
-summary(simple_fe)
+nr_occ_results <- rbind(plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "pooling")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "between")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "fd")),
+                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "fd")))
 
-simple_re <- plm(zhvi ~ nr_dis_lag_1 + data_series, data = simple_panel, index = c("fips_code", "date"), model = "random")
+# TODO add data series to results table
+
+
