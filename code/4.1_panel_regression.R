@@ -7,40 +7,6 @@ load("data/zillow_county.RData")
 load("data/fema.RData")
 
 ### Prepare panel data ----
-# fema_panel <- expand.grid("fips_code" = unique(fema$place_code), "date" = unique(zillow_county$date))
-# fema_panel$nr_dis_lag_999 <- NA
-# fema_panel$nr_dis_lag_0.5 <- NA
-# fema_panel$nr_dis_lag_1 <- NA
-# fema_panel$nr_dis_lag_2 <- NA
-# fema_panel$nr_dis_lag_3 <- NA
-# fema_panel$nr_dis_lag_4 <- NA
-# fema_panel$nr_dis_lag_5 <- NA
-# fema_panel$nr_dis_lag_10 <- NA
-# fema_panel$nr_dis_lag_15 <- NA
-# fema_panel$nr_dis_lag_20 <- NA
-# 
-# average_time <- c()
-# 
-# for (i in 1:nrow(fema_panel)){
-#   start_time <- Sys.time()
-#   fema_panel$nr_dis_lag_999[i] <- length(unique(subset(fema, date_designated <= fema_panel$date[i] & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_0.5[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 182.625) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_1[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 365.25) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_2[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 730.5) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_3[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 1095.75) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_4[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 1461) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_5[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 1826.25) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_10[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 3652.5) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_15[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 5478.75) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   fema_panel$nr_dis_lag_20[i] <- length(unique(subset(fema, (date_designated <= fema_panel$date[i] & date_designated >= fema_panel$date[i] - 7305) & place_code == fema_panel$fips_code[i])$disaster_number))
-#   average_time <- c(average_time, Sys.time() - start_time)
-#   
-#   if (i %% 500 == 0){
-#     print(paste0(i, "/", nrow(fema_panel), " - Mean row time: ", mean(average_time), " - ETA: ", (nrow(fema_panel) - i) * mean(average_time)))
-#   }
-# }
-
-# Cross product approach
 source("code/1_data merging.R")
 
 fema_panel <- data.frame()
@@ -84,60 +50,156 @@ save(fema_panel, file = "data/fema_panel.RData")
 ### Number of occurrences ----
 nr_occ_panel <- merge(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series),
                       data.frame("fips_code" = fema_panel$fips_code, "date" = fema_panel$date,
-                                 "nr_dis_lag_999" = sapply(fema_panel$dis_lag_999, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_0.5" = sapply(fema_panel$dis_lag_0.5, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_1" = sapply(fema_panel$dis_lag_1, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_2" = sapply(fema_panel$dis_lag_2, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_3" = sapply(fema_panel$dis_lag_3, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_4" = sapply(fema_panel$dis_lag_4, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_5" = sapply(fema_panel$dis_lag_5, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_10" = sapply(fema_panel$dis_lag_10, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_15" = sapply(fema_panel$dis_lag_15, function(x){length(unique(unlist(str_split(x, ", "))))}),
-                                 "nr_dis_lag_20" = sapply(fema_panel$dis_lag_20, function(x){length(unique(unlist(str_split(x, ", "))))})),
+                                 "nr_dis_lag_999" = sapply(fema_panel$dis_lag_999, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_0.5" = sapply(fema_panel$dis_lag_0.5, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_1" = sapply(fema_panel$dis_lag_1, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_2" = sapply(fema_panel$dis_lag_2, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_3" = sapply(fema_panel$dis_lag_3, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_4" = sapply(fema_panel$dis_lag_4, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_5" = sapply(fema_panel$dis_lag_5, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_10" = sapply(fema_panel$dis_lag_10, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_15" = sapply(fema_panel$dis_lag_15, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))}),
+                                 "nr_dis_lag_20" = sapply(fema_panel$dis_lag_20, function(x){ifelse(is.na(x), 0, length(unique(unlist(str_split(x, ", ")))))})),
                       by = c("fips_code", "date"), all.x = T)
 
 
-nr_occ_results <- rbind(plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "pooling")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "between")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "fd")),
-                        plm_results(plm(zhvi ~ nr_dis_lag_1 + nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "fd")))
+spec_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.3))
 
-# TODO add data series to results table
+spec_1_hausman <- rbind(data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 1.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 1.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 1.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(nr_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 1.3))
 
+
+### Dummy occurrence ----
+dummy_occ_panel <- merge(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series),
+                         data.frame("fips_code" = fema_panel$fips_code, "date" = fema_panel$date,
+                                    "nr_dis_lag_999" = sapply(fema_panel$dis_lag_999, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_0.5" = sapply(fema_panel$dis_lag_0.5, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_1" = sapply(fema_panel$dis_lag_1, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_2" = sapply(fema_panel$dis_lag_2, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_3" = sapply(fema_panel$dis_lag_3, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_4" = sapply(fema_panel$dis_lag_4, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_5" = sapply(fema_panel$dis_lag_5, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_10" = sapply(fema_panel$dis_lag_10, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_15" = sapply(fema_panel$dis_lag_15, function(x){ifelse(is.na(x), 0, 1)}),
+                                    "nr_dis_lag_20" = sapply(fema_panel$dis_lag_20, function(x){ifelse(is.na(x), 0, 1)})),
+                         by = c("fips_code", "date"), all.x = T)
+
+spec_2 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.1),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.2),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.3),
+                data.frame(plm_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.3))
+
+spec_2_hausman <- rbind(data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.1),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.2),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_top_tier", "spec" = 2.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "random")), "data_series" = "all_homes_bottom_tier", "spec" = 2.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "random")), "data_series" = "single_family_homes", "spec" = 2.3),
+                        data.frame(hausman_results(plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "within"),
+                                                   plm(zhvi ~ nr_dis_lag_999 + nr_dis_lag_0.5 + nr_dis_lag_1 + nr_dis_lag_5, data = subset(dummy_occ_panel, data_series == "condo_coop"), index = c("fips_code", "date"), model = "random")), "data_series" = "condo_coop", "spec" = 2.3))
+
+
+### Number of occurrences by disaster type ----
+nr_occ_type_panel <- splitstackshape::cSplit(fema_panel, splitCols = c("dis_lag_999", "dis_lag_0.5", "dis_lag_1", "dis_lag_2", "dis_lag_3", "dis_lag_4", "dis_lag_5", "dis_lag_10", "dis_lag_15", "dis_lag_20"), sep = ", ", direction = "long")
+nr_occ_type_panel$dis_lag_999 <- as.integer(nr_occ_type_panel$dis_lag_999)
+nr_occ_type_panel$dis_lag_0.5 <- as.integer(nr_occ_type_panel$dis_lag_0.5)
+nr_occ_type_panel$dis_lag_1 <- as.integer(nr_occ_type_panel$dis_lag_1)
+nr_occ_type_panel$dis_lag_2 <- as.integer(nr_occ_type_panel$dis_lag_2)
+nr_occ_type_panel$dis_lag_3 <- as.integer(nr_occ_type_panel$dis_lag_3)
+nr_occ_type_panel$dis_lag_4 <- as.integer(nr_occ_type_panel$dis_lag_4)
+nr_occ_type_panel$dis_lag_5 <- as.integer(nr_occ_type_panel$dis_lag_5)
+nr_occ_type_panel$dis_lag_10 <- as.integer(nr_occ_type_panel$dis_lag_10)
+nr_occ_type_panel$dis_lag_15 <- as.integer(nr_occ_type_panel$dis_lag_15)
+nr_occ_type_panel$dis_lag_20 <- as.integer(nr_occ_type_panel$dis_lag_20)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_999" = incident_type), by.x = "dis_lag_999", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_0.5" = incident_type), by.x = "dis_lag_0.5", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_1" = incident_type), by.x = "dis_lag_1", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_2" = incident_type), by.x = "dis_lag_2", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_3" = incident_type), by.x = "dis_lag_3", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_4" = incident_type), by.x = "dis_lag_4", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_5" = incident_type), by.x = "dis_lag_5", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_10" = incident_type), by.x = "dis_lag_10", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_15" = incident_type), by.x = "dis_lag_15", by.y = "disaster_number", all.x = TRUE)
+nr_occ_type_panel <- merge(nr_occ_type_panel, select(fema, disaster_number, "dis_type_lag_20" = incident_type), by.x = "dis_lag_20", by.y = "disaster_number", all.x = TRUE)
 
