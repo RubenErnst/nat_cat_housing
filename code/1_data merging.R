@@ -50,3 +50,13 @@ plm_results <- function(plm_obj){
   out$fstat_pvalue <- summary(plm_obj)$fstatistic$p.value
   return(out)
 }
+
+hausman_results <- function(plm_fe, plm_re){
+  stopifnot(class(plm_fe)[1] == "plm")
+  stopifnot(class(plm_re)[1] == "plm")
+  hm <- phtest(plm_fe, plm_re)
+  out <- data.frame("chi_sq" = hm$statistic,
+                    "df" = hm$parameter,
+                    "p_value" = hm$p.value)
+  return(out)
+}
