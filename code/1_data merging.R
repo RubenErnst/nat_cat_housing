@@ -51,6 +51,17 @@ plm_results <- function(plm_obj){
   return(out)
 }
 
+f_test_results <- function(plm_1, plm_2){
+  stopifnot(class(plm_1)[1] == "plm")
+  stopifnot(class(plm_2)[1] == "plm")
+  hm <- pFtest(plm_1, plm_2)
+  out <- data.frame("f_stat" = hm$statistic,
+                    "df_1" = hm$parameter[1],
+                    "df_2" = hm$parameter[2],
+                    "p_value" = hm$p.value)
+  return(out)
+}
+
 hausman_results <- function(plm_fe, plm_re){
   stopifnot(class(plm_fe)[1] == "plm")
   stopifnot(class(plm_re)[1] == "plm")
