@@ -48,6 +48,7 @@ plm_results <- function(plm_obj){
   out$adj_rsq <- summary(plm_obj)$r.squared[2]
   out$fstatistic <- summary(plm_obj)$fstatistic$statistic
   out$fstat_pvalue <- summary(plm_obj)$fstatistic$p.value
+  out$nr_obs <- nrow(plm_obj$model)
   return(out)
 }
 
