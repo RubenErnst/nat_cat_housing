@@ -394,22 +394,24 @@ for (it in unique(incident_type_dict$incident_type)){
 
 nr_occ_type_panel <- arrange(temp_nr_occ_type_panel, fips_code, date, incident_type)
 
+check_panel <- aggregate(zhvi ~ fips_code + date + data_series, nr_occ_type_panel, function(x){length(na.omit(x))})
+
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
 
 nr_occ_type_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
                            nr_occ_type_panel,
                            by = c("fips_code", "date", "incident_type"), all.x = T)
 
-nr_occ_type_panel$nr_dis_lag_999 <- sapply(nr_occ_type_panel$nr_dis_lag_999, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_1 <- sapply(nr_occ_type_panel$nr_dis_lag_1, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_1_e <- sapply(nr_occ_type_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_2_e <- sapply(nr_occ_type_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_3_e <- sapply(nr_occ_type_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_5_e <- sapply(nr_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
-nr_occ_type_panel$nr_dis_lag_10_e <- sapply(nr_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_999 <- sapply(nr_occ_type_panel$nr_dis_lag_999, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_1 <- sapply(nr_occ_type_panel$nr_dis_lag_1, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_1_e <- sapply(nr_occ_type_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_2_e <- sapply(nr_occ_type_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_3_e <- sapply(nr_occ_type_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_5_e <- sapply(nr_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+nr_occ_type_panel$nr_dis_lag_10_e <- sapply(nr_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
 
 
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
@@ -467,8 +469,8 @@ bea <- subset(bea, !fips_code %in% bea_fips_mod$BEA.FIPS)
 
 # Add number of counties that BEA has aggregated to not inflate GDP numbers after assignment
 bea_fips_mod <- merge(bea_fips_mod,
-                       select(aggregate(FIPS ~ BEA.FIPS, bea_fips_mod, function(x){length(unique(x))}), BEA.FIPS, "nr_counties" = FIPS),
-                       by = "BEA.FIPS", all.x = TRUE)
+                      select(aggregate(FIPS ~ BEA.FIPS, bea_fips_mod, function(x){length(unique(x))}), BEA.FIPS, "nr_counties" = FIPS),
+                      by = "BEA.FIPS", all.x = TRUE)
 
 bea_codes <- merge(splitstackshape::cSplit(data.frame("fips_code" = bea_fips_mod$FIPS,
                                                       "nr_counties" = bea_fips_mod$nr_counties,
@@ -491,9 +493,6 @@ nr_occ_type_panel <- merge(nr_occ_type_panel,
                            select(bea, fips_code, year, gdp_value),
                            by = c("fips_code", "year"), all.x = TRUE)
 
-rm(bea, bea_2001_2017_industries, bea_2017_2022_industries)
-gc()
-
 
 # Add BLS LAUS data
 load("data/bls_laus.RData")
@@ -505,9 +504,6 @@ laus$unemployment_rate <- as.numeric(laus$unemployment_rate)
 nr_occ_type_panel <- merge(nr_occ_type_panel,
                            select(laus, fips_code, year, unemployment_rate),
                            by = c("fips_code", "year"), all.x = TRUE)
-
-rm(laus)
-gc()
 
 
 # Add BLS QCEW data
@@ -523,9 +519,6 @@ qcew <- subset(qcew, avg_wkly_wage != 0)
 nr_occ_type_panel <- merge(nr_occ_type_panel,
                            select(qcew, "fips_code" = area_fips, year, "quarter" = qtr, avg_wkly_wage),
                            by = c("fips_code", "year", "quarter"), all.x = TRUE)
-
-rm(qcew)
-gc()
 
 
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
@@ -600,3 +593,274 @@ spec_5_3 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag
                   data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "five_plus_bedroom", "effect" = "both", "spec" = 5.3))
 
 openxlsx::write.xlsx(rbind(spec_5_1, spec_5_2, spec_5_3), file = "results/panel_spec_5.xlsx")
+
+
+
+
+### Dummy occurrence by type ----
+dummy_occ_type_panel <- splitstackshape::cSplit(fema_panel, splitCols = c("dis_lag_999", "dis_lag_0.25", "dis_lag_0.5", "dis_lag_0.5_e", "dis_lag_1", "dis_lag_1_e", "dis_lag_2_e", "dis_lag_3_e", "dis_lag_5_e", "dis_lag_10_e"), sep = ", ", direction = "long")
+dummy_occ_type_panel$dis_lag_999 <- as.integer(dummy_occ_type_panel$dis_lag_999)
+dummy_occ_type_panel$dis_lag_0.25 <- as.integer(dummy_occ_type_panel$dis_lag_0.25)
+dummy_occ_type_panel$dis_lag_0.5 <- as.integer(dummy_occ_type_panel$dis_lag_0.5)
+dummy_occ_type_panel$dis_lag_0.5_e <- as.integer(dummy_occ_type_panel$dis_lag_0.5_e)
+dummy_occ_type_panel$dis_lag_1 <- as.integer(dummy_occ_type_panel$dis_lag_1)
+dummy_occ_type_panel$dis_lag_1_e <- as.integer(dummy_occ_type_panel$dis_lag_1_e)
+dummy_occ_type_panel$dis_lag_2_e <- as.integer(dummy_occ_type_panel$dis_lag_2_e)
+dummy_occ_type_panel$dis_lag_3_e <- as.integer(dummy_occ_type_panel$dis_lag_3_e)
+dummy_occ_type_panel$dis_lag_5_e <- as.integer(dummy_occ_type_panel$dis_lag_5_e)
+dummy_occ_type_panel$dis_lag_10_e <- as.integer(dummy_occ_type_panel$dis_lag_10_e)
+
+dummy_occ_type_panel$dis_lag_999 <- incident_map[unlist(dummy_occ_type_panel$dis_lag_999)]
+dummy_occ_type_panel$dis_lag_0.25 <- incident_map[unlist(dummy_occ_type_panel$dis_lag_0.25)]
+dummy_occ_type_panel$dis_lag_0.5 <- incident_map[unlist(dummy_occ_type_panel$dis_lag_0.5)]
+dummy_occ_type_panel$dis_lag_0.5_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_0.5_e)]
+dummy_occ_type_panel$dis_lag_1 <- incident_map[unlist(dummy_occ_type_panel$dis_lag_1)]
+dummy_occ_type_panel$dis_lag_1_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_1_e)]
+dummy_occ_type_panel$dis_lag_2_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_2_e)]
+dummy_occ_type_panel$dis_lag_3_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_3_e)]
+dummy_occ_type_panel$dis_lag_5_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_5_e)]
+dummy_occ_type_panel$dis_lag_10_e <- incident_map[unlist(dummy_occ_type_panel$dis_lag_10_e)]
+
+dummy_occ_type_panel <- subset(dummy_occ_type_panel, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e)))
+
+save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
+
+
+# Aggregate into frequency table
+temp_dummy_occ_type_panel <- data.frame()
+for (it in unique(incident_type_dict$incident_type)){
+  # This is not ideal but the agg functions fail otherwise
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_999), dis_lag_999 == it)) > 0){
+    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){ifelse(is.na(x), 0, 1)}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
+  } else {
+    temp_1 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_999" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it)) > 0){
+    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
+  } else {
+    temp_2 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.25" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it)) > 0){
+    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
+  } else {
+    temp_3 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it)) > 0){
+    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
+  } else {
+    temp_4 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5_e" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_1), dis_lag_1 == it)) > 0){
+    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
+  } else {
+    temp_5 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_1_e), dis_lag_1_e == it)) > 0){
+    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
+  } else {
+    temp_6 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1_e" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_2_e), dis_lag_2_e == it)) > 0){
+    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
+  } else {
+    temp_7 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_2_e" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_3_e), dis_lag_3_e == it)) > 0){
+    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
+  } else {
+    temp_8 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_3_e" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_5_e), dis_lag_5_e == it)) > 0){
+    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
+  } else {
+    temp_9 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_5_e" = NA)
+  }
+  
+  if (nrow(subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_10_e), dis_lag_10_e == it)) > 0){
+    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(dummy_occ_type_panel, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){ifelse(is.na(x), 0, 1)}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
+  } else {
+    temp_10 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_10_e" = NA)
+  }
+  
+  temp_dummy_occ_type_panel <- rbind(temp_dummy_occ_type_panel,
+                                     merge(merge(merge(merge(temp_1,
+                                                             temp_2,
+                                                             by = c("fips_code", "date"), all = TRUE),
+                                                       merge(temp_3,
+                                                             temp_4,
+                                                             by = c("fips_code", "date"), all = TRUE),
+                                                       by = c("fips_code", "date"), all = TRUE),
+                                                 merge(merge(temp_5,
+                                                             temp_6,
+                                                             by = c("fips_code", "date"), all = TRUE),
+                                                       merge(temp_7,
+                                                             temp_8,
+                                                             by = c("fips_code", "date"), all = TRUE),
+                                                       by = c("fips_code", "date"), all = TRUE),
+                                                 by = c("fips_code", "date"), all = TRUE),
+                                           merge(temp_9,
+                                                 temp_10,
+                                                 by = c("fips_code", "date"), all = TRUE),
+                                           by = c("fips_code", "date"), all = TRUE))
+  print(paste0(it, " - ", which(unique(incident_type_dict$incident_type) == it), "/", length(unique(incident_type_dict$incident_type))))
+}
+
+dummy_occ_type_panel <- arrange(temp_dummy_occ_type_panel, fips_code, date, incident_type)
+
+check_panel <- aggregate(zhvi ~ fips_code + date + data_series, dummy_occ_type_panel, function(x){length(na.omit(x))})
+
+save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
+
+dummy_occ_type_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
+                              dummy_occ_type_panel,
+                              by = c("fips_code", "date", "incident_type"), all.x = T)
+
+dummy_occ_type_panel$nr_dis_lag_999 <- sapply(dummy_occ_type_panel$nr_dis_lag_999, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.25 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.5 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_1 <- sapply(dummy_occ_type_panel$nr_dis_lag_1, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_1_e <- sapply(dummy_occ_type_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_2_e <- sapply(dummy_occ_type_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_3_e <- sapply(dummy_occ_type_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_10_e <- sapply(dummy_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+
+
+save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
+
+
+# Dummy spec with incident type
+spec_6_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 6.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 6.1))
+
+spec_6_2 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 6.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 6.2))
+
+
+# Add time fixed effects per year
+spec_6_3 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "one_bedroom", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "two_bedroom", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "three_bedroom", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "four_bedroom", "effect" = "both", "spec" = 6.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "five_plus_bedroom", "effect" = "both", "spec" = 6.3))
+
+openxlsx::write.xlsx(rbind(spec_6_1, spec_6_2, spec_6_3), file = "results/panel_spec_6.xlsx")
+
+
+# Add economic variables
+dummy_occ_type_panel$year <- lubridate::year(dummy_occ_type_panel$date)
+dummy_occ_type_panel$quarter <- lubridate::quarter(dummy_occ_type_panel$date)
+
+dummy_occ_type_panel <- merge(dummy_occ_type_panel,
+                              select(bea, fips_code, year, gdp_value),
+                              by = c("fips_code", "year"), all.x = TRUE)
+
+dummy_occ_type_panel <- merge(dummy_occ_type_panel,
+                              select(laus, fips_code, year, unemployment_rate),
+                              by = c("fips_code", "year"), all.x = TRUE)
+
+dummy_occ_type_panel <- merge(dummy_occ_type_panel,
+                              select(qcew, "fips_code" = area_fips, year, "quarter" = qtr, avg_wkly_wage),
+                              by = c("fips_code", "year", "quarter"), all.x = TRUE)
+
+
+# Run dummy panel with incident type and econ variables
+spec_7_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 7.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 7.1))
+
+spec_7_2 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 7.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 7.2))
+
+
+# Add time fixed effects per year
+spec_7_3 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "one_bedroom", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "two_bedroom", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "three_bedroom", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "four_bedroom", "effect" = "both", "spec" = 7.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "five_plus_bedroom", "effect" = "both", "spec" = 7.3))
+
+openxlsx::write.xlsx(rbind(spec_7_1, spec_7_2, spec_7_3), file = "results/panel_spec_7.xlsx")
+
+
+# Including GDP (reduces observations to 2017-2022)
+spec_8_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 8.1),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 8.1))
+
+spec_8_2 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_bottom_tier", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "single_family_homes", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "condo_coop", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "one_bedroom", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "two_bedroom", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "three_bedroom", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "four_bedroom", "effect" = "entity", "spec" = 8.2),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value, subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "five_plus_bedroom", "effect" = "entity", "spec" = 8.2))
+
+
+# Add time fixed effects per year
+spec_8_3 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_top_tier", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "all_homes_bottom_tier"), index = c("fips_code", "date"), model = "within")), "data_series" = "all_homes_bottom_tier", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within")), "data_series" = "single_family_homes", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "condo_coop"), index = c("fips_code", "date"), model = "within")), "data_series" = "condo_coop", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "one_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "one_bedroom", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "two_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "two_bedroom", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "three_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "three_bedroom", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "four_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "four_bedroom", "effect" = "both", "spec" = 8.3),
+                  data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + unemployment_rate + avg_wkly_wage + gdp_value + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e, gdp_value, unemployment_rate, avg_wkly_wage), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "five_plus_bedroom", "effect" = "both", "spec" = 8.3))
+
+openxlsx::write.xlsx(rbind(spec_8_1, spec_8_2, spec_8_3), file = "results/panel_spec_8.xlsx")
+
+
+
