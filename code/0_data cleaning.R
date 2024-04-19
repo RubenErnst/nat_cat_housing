@@ -1565,3 +1565,31 @@ county_shape <- sf::st_transform(county_shape, crs = sp::CRS("+proj=longlat"))
 
 # Save binary
 save(county_shape, file = "data/county_shape.RData")
+
+
+
+### Population estimate per county ----
+county_population <- read_csv("../../3_Data/CENSUS_Population/co-est00int-tot.csv", show_col_types = FALSE)
+names(county_population) <- tolower(names(county_population))
+
+county_population$fips_code <- fips_pad(county_population$state, county_population$county)
+county_population <- pivot_longer(select(county_population, fips_code, "state_name" = stname, "county_name" = ctyname, starts_with("popestimate")), cols = starts_with("popestimate"), names_to = "year", names_prefix = "popestimate", values_to = "population_estimate")
+
+population_temp <- read_csv("../../3_Data/CENSUS_Population/co-est2020-alldata.csv", show_col_types = FALSE)
+names(population_temp) <- tolower(names(population_temp))
+
+population_temp$fips_code <- fips_pad(population_temp$state, population_temp$county)
+population_temp <- pivot_longer(select(population_temp, fips_code, "state_name" = stname, "county_name" = ctyname, starts_with("popestimate")), cols = starts_with("popestimate"), names_to = "year", names_prefix = "popestimate", values_to = "population_estimate")
+
+county_population <- rbind(county_population, population_temp)
+
+population_temp <- read_csv("../../3_Data/CENSUS_Population/co-est2023-alldata.csv", show_col_types = FALSE)
+names(population_temp) <- tolower(names(population_temp))
+
+population_temp$fips_code <- fips_pad(population_temp$state, population_temp$county)
+population_temp <- pivot_longer(select(population_temp, fips_code, "state_name" = stname, "county_name" = ctyname, starts_with("popestimate")), cols = starts_with("popestimate"), names_to = "year", names_prefix = "popestimate", values_to = "population_estimate")
+
+county_population <- rbind(county_population, population_temp); rm(population_temp)
+
+# Save binary
+save(county_population, file = "data/county_population_estimate.RData")
