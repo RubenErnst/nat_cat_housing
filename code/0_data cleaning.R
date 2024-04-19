@@ -1574,12 +1574,14 @@ names(county_population) <- tolower(names(county_population))
 
 county_population$fips_code <- fips_pad(county_population$state, county_population$county)
 county_population <- pivot_longer(select(county_population, fips_code, "state_name" = stname, "county_name" = ctyname, starts_with("popestimate")), cols = starts_with("popestimate"), names_to = "year", names_prefix = "popestimate", values_to = "population_estimate")
+county_population <- subset(county_population, year != 2010)
 
 population_temp <- read_csv("../../3_Data/CENSUS_Population/co-est2020-alldata.csv", show_col_types = FALSE)
 names(population_temp) <- tolower(names(population_temp))
 
 population_temp$fips_code <- fips_pad(population_temp$state, population_temp$county)
 population_temp <- pivot_longer(select(population_temp, fips_code, "state_name" = stname, "county_name" = ctyname, starts_with("popestimate")), cols = starts_with("popestimate"), names_to = "year", names_prefix = "popestimate", values_to = "population_estimate")
+population_temp <- subset(population_temp, year != 2020)
 
 county_population <- rbind(county_population, population_temp)
 
