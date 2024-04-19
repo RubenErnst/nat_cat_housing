@@ -15,26 +15,26 @@ for (sc in unique(zillow_county$state_code_fips)){
   zillow_county_slice <- subset(zillow_county, state_code_fips == sc)
   
   fema_panel_temp <- merge(data.frame("fips_code" = fips_pad(zillow_county_slice$state_code_fips, zillow_county_slice$municipal_code_fips), "date" = zillow_county_slice$date),
-                           select(fema, disaster_number, place_code, date_designated),
+                           select(fema, disaster_number, place_code, date_incident_begin),
                            by.x = "fips_code", by.y = "place_code", all.x = TRUE)
   
-  fema_panel_temp <- merge(merge(merge(merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_designated), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_999" = disaster_number),
-                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_designated & date_designated >= (date - 91.3125)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.25" = disaster_number),
+  fema_panel_temp <- merge(merge(merge(merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_incident_begin), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_999" = disaster_number),
+                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_incident_begin & date_incident_begin >= (date - 91.3125)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.25" = disaster_number),
                                              by = c("fips_code", "date"), all = TRUE),
-                                       merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_designated & date_designated >= (date - 182.625)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.5" = disaster_number),
-                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 91.3125) >= date_designated & date_designated >= (date - 182.625)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.5_e" = disaster_number),
+                                       merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_incident_begin & date_incident_begin >= (date - 182.625)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.5" = disaster_number),
+                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 91.3125) >= date_incident_begin & date_incident_begin >= (date - 182.625)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_0.5_e" = disaster_number),
                                              by = c("fips_code", "date"), all = TRUE),
                                        by = c("fips_code", "date"), all = TRUE),
-                                 merge(merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_designated & date_designated >= (date - 365.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_1" = disaster_number),
-                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 182.625) >= date_designated & date_designated >= (date - 365.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_1_e" = disaster_number),
+                                 merge(merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, date >= date_incident_begin & date_incident_begin >= (date - 365.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_1" = disaster_number),
+                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 182.625) >= date_incident_begin & date_incident_begin >= (date - 365.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_1_e" = disaster_number),
                                              by = c("fips_code", "date"), all = TRUE),
-                                       merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 365.25) >= date_designated & date_designated >= (date - 730.5)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_2_e" = disaster_number),
-                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 730.5) >= date_designated & date_designated >= (date - 1095.75)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_3_e" = disaster_number),
+                                       merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 365.25) >= date_incident_begin & date_incident_begin >= (date - 730.5)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_2_e" = disaster_number),
+                                             select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 730.5) >= date_incident_begin & date_incident_begin >= (date - 1095.75)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_3_e" = disaster_number),
                                              by = c("fips_code", "date"), all = TRUE),
                                        by = c("fips_code", "date"), all = TRUE),
                                  by = c("fips_code", "date"), all = TRUE),
-                           merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 1095.75) >= date_designated & date_designated >= (date - 1826.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_5_e" = disaster_number),
-                                 select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 1826.25) >= date_designated & date_designated >= (date - 3652.5)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_10_e" = disaster_number),
+                           merge(select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 1095.75) >= date_incident_begin & date_incident_begin >= (date - 1826.25)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_5_e" = disaster_number),
+                                 select(aggregate(disaster_number ~ fips_code + date, subset(fema_panel_temp, (date - 1826.25) >= date_incident_begin & date_incident_begin >= (date - 3652.5)), function(x){paste(unique(x), collapse = ", ")}), fips_code, date, "dis_lag_10_e" = disaster_number),
                                  by = c("fips_code", "date"), all = TRUE),
                            by = c("fips_code", "date"), all = TRUE)
   
@@ -715,8 +715,6 @@ for (it in unique(incident_type_dict$incident_type)){
 
 dummy_occ_type_panel <- arrange(temp_dummy_occ_type_panel, fips_code, date, incident_type)
 
-check_panel <- aggregate(zhvi ~ fips_code + date + data_series, dummy_occ_type_panel, function(x){length(na.omit(x))})
-
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
 
 dummy_occ_type_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
@@ -734,6 +732,7 @@ dummy_occ_type_panel$nr_dis_lag_3_e <- sapply(dummy_occ_type_panel$nr_dis_lag_3_
 dummy_occ_type_panel$nr_dis_lag_5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
 dummy_occ_type_panel$nr_dis_lag_10_e <- sapply(dummy_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
 
+check_panel <- aggregate(zhvi ~ fips_code + date + data_series, dummy_occ_type_panel, function(x){length(na.omit(x))})
 
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
 
@@ -862,5 +861,73 @@ spec_8_3 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + nr_dis_lag
 
 openxlsx::write.xlsx(rbind(spec_8_1, spec_8_2, spec_8_3), file = "results/panel_spec_8.xlsx")
 
+
+
+### Disaster cost panel ----
+cost_dis_panel <- unique(select(fema, disaster_number, place_code, date_incident_begin, amount_ihp_approved, amount_ha_approved, amount_ona_approved, amount_pa_obligated, amount_catab_obligated, amount_catc2g_obligated, amount_hmgp_obligated))
+
+load("data/county_population_estimate.RData")
+cost_dis_panel$year <- lubridate::year(cost_dis_panel$date_incident_begin)
+pop_norm <- merge(unique(select(cost_dis_panel, disaster_number, place_code, year)),
+                  select(county_population, fips_code, year, population_estimate),
+                  by.x = c("place_code", "year"), by.y = c("fips_code", "year"), all.x = TRUE)
+
+pop_norm <- select(aggregate(population_estimate ~ disaster_number + year, pop_norm, sum, na.rm = TRUE), disaster_number, year, "total_pop_aff" = population_estimate)
+
+cost_dis_panel <- merge(subset(cost_dis_panel, !is.na(year)),
+                        pop_norm,
+                        by = c("disaster_number", "year"), all.x = TRUE)
+
+cost_dis_panel <- subset(cost_dis_panel, !is.na(total_pop_aff))
+cost_dis_panel <- subset(cost_dis_panel, !(is.na(amount_ihp_approved) & is.na(amount_ha_approved) & is.na(amount_ona_approved) & is.na(amount_pa_obligated) & is.na(amount_catab_obligated) & is.na(amount_catc2g_obligated) & is.na(amount_hmgp_obligated)))
+
+cost_dis_panel$pp_ihp <- cost_dis_panel$amount_ihp_approved / cost_dis_panel$total_pop_aff
+cost_dis_panel$pp_pa <- cost_dis_panel$amount_pa_obligated / cost_dis_panel$total_pop_aff
+cost_dis_panel$pp_hmgp <- cost_dis_panel$amount_hmgp_obligated / cost_dis_panel$total_pop_aff
+
+# See separate reasoning
+cost_dis_panel[is.na(cost_dis_panel)] <- 0
+
+save(cost_dis_panel, file = "data/cost_dis_panel.RData")
+
+
+# Create lagged panel with cost received as disaster severity proxy
+cost_panel <- splitstackshape::cSplit(fema_panel, splitCols = c("dis_lag_999", "dis_lag_0.25", "dis_lag_0.5", "dis_lag_0.5_e", "dis_lag_1", "dis_lag_1_e", "dis_lag_2_e", "dis_lag_3_e", "dis_lag_5_e", "dis_lag_10_e"), sep = ", ", direction = "long")
+cost_panel$dis_lag_999 <- as.integer(cost_panel$dis_lag_999)
+cost_panel$dis_lag_0.25 <- as.integer(cost_panel$dis_lag_0.25)
+cost_panel$dis_lag_0.5 <- as.integer(cost_panel$dis_lag_0.5)
+cost_panel$dis_lag_0.5_e <- as.integer(cost_panel$dis_lag_0.5_e)
+cost_panel$dis_lag_1 <- as.integer(cost_panel$dis_lag_1)
+cost_panel$dis_lag_1_e <- as.integer(cost_panel$dis_lag_1_e)
+cost_panel$dis_lag_2_e <- as.integer(cost_panel$dis_lag_2_e)
+cost_panel$dis_lag_3_e <- as.integer(cost_panel$dis_lag_3_e)
+cost_panel$dis_lag_5_e <- as.integer(cost_panel$dis_lag_5_e)
+cost_panel$dis_lag_10_e <- as.integer(cost_panel$dis_lag_10_e)
+
+cost_panel <- pivot_longer(cost_panel, cols = starts_with("dis_lag_"), names_to = "lag", values_to = "disaster_number", values_drop_na = TRUE)
+
+# Check if single column merge condition is given
+stopifnot(length(unique(cost_dis_panel$disaster_number)) == nrow(unique(select(cost_dis_panel, disaster_number, year))))
+cost_panel <- merge(cost_panel,
+                    select(cost_dis_panel, "fips_code" = place_code, disaster_number, starts_with("pp_")),
+                    by = c("disaster_number", "fips_code"), all.x = TRUE)
+
+cost_panel <- subset(cost_panel, !(is.na(pp_ihp) & is.na(pp_pa) & is.na(pp_hmgp)))
+
+cost_panel <- pivot_wider(pivot_longer(cost_panel, cols = starts_with("pp_"), names_to = "assistance_type", values_to = "pp_assistance"), id_cols = c("disaster_number", "fips_code", "date", "assistance_type"), names_from = "lag", values_from = "pp_assistance")
+
+cost_panel$dis_lag_999 <- sapply(cost_panel$dis_lag_999, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_0.25 <- sapply(cost_panel$dis_lag_0.25, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_0.5 <- sapply(cost_panel$dis_lag_0.5, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_0.5_e <- sapply(cost_panel$dis_lag_0.5_e, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_1 <- sapply(cost_panel$dis_lag_1, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_1_e <- sapply(cost_panel$dis_lag_1_e, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_2_e <- sapply(cost_panel$dis_lag_2_e, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_3_e <- sapply(cost_panel$dis_lag_3_e, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_5_e <- sapply(cost_panel$dis_lag_5_e, function(x){ifelse(is.na(x), 0, x)})
+cost_panel$dis_lag_10_e <- sapply(cost_panel$dis_lag_10_e, function(x){ifelse(is.na(x), 0, x)})
+
+# Save binary
+save(cost_panel, file = "data/prepared_cost_panels.RData")
 
 
