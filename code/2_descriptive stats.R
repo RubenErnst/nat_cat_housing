@@ -54,8 +54,8 @@ zillow_county_desc <- merge(zillow_county_desc,
 zillow_county_desc <- as.data.frame(t(zillow_county_desc))
 names(zillow_county_desc) <- zillow_county_desc[1, ]
 zillow_county_desc <- zillow_county_desc[-1,]
-zillow_county_desc <- select(zillow_county_desc, all_homes_bottom_tier, all_homes_top_tier, single_family_homes, condo_coop, one_bedroom, two_bedroom, three_bedroom, four_bedroom, five_plus_bedroom)
-names(zillow_county_desc) <- c("Bottom Tier", "Top Tier", "Single Family", "Condo / Co-Op", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4 Bedrooms", "5+ Bedrooms")
+zillow_county_desc <- select(zillow_county_desc, all_homes_bottom_tier, all_homes_middle_tier, all_homes_top_tier, single_family_homes, condo_coop, one_bedroom, two_bedroom, three_bedroom, four_bedroom, five_plus_bedroom)
+names(zillow_county_desc) <- c("Bottom Tier", "Middle Tier", "Top Tier", "Single Family", "Condo / Co-Op", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4 Bedrooms", "5+ Bedrooms")
 row.names(zillow_county_desc) <- c("Observations", "Date Range", "Regions", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
 
 # Save as Latex table
