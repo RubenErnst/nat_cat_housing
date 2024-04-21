@@ -9,6 +9,11 @@ zillow_county <- read_delim("../../3_Data/Zillow/County_zhvi_uc_sfrcondo_tier_0.
   pivot_longer(cols = c(-RegionID, -SizeRank, -RegionName, -RegionType, -StateName, -State, -Metro, -StateCodeFIPS, -MunicipalCodeFIPS), names_to = "date", values_to = "zhvi") |> 
   mutate("data_series" = "all_homes_bottom_tier")
 
+zillow_county <- read_delim("../../3_Data/Zillow/County_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv") |> 
+  pivot_longer(cols = c(-RegionID, -SizeRank, -RegionName, -RegionType, -StateName, -State, -Metro, -StateCodeFIPS, -MunicipalCodeFIPS), names_to = "date", values_to = "zhvi") |> 
+  mutate("data_series" = "all_homes_middle_tier") |> 
+  rbind(zillow_county)
+
 zillow_county <- read_delim("../../3_Data/Zillow/County_zhvi_uc_sfrcondo_tier_0.67_1.0_sm_sa_month.csv") |> 
   pivot_longer(cols = c(-RegionID, -SizeRank, -RegionName, -RegionType, -StateName, -State, -Metro, -StateCodeFIPS, -MunicipalCodeFIPS), names_to = "date", values_to = "zhvi") |> 
   mutate("data_series" = "all_homes_top_tier") |> 
