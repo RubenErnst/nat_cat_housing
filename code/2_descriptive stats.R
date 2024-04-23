@@ -60,7 +60,7 @@ row.names(zillow_county_desc) <- c("Observations", "Date Range", "Regions", "Min
 
 # Save as Latex table
 zillow_county_desc |> 
-  kbl(format = "latex", align="r") |> 
+  kbl(format = "latex", align = "r") |> 
   kable_classic(full_width = TRUE) |> 
   write_file(file = "tables/zillow_descriptives.tex")
 
@@ -71,6 +71,7 @@ rm(list = ls())
 gc()
 
 load("data/fema.RData")
+load("data/zillow_county.RData")
 source("code/1_data merging.R")
 
 fema <- merge(fema, fema_incident_mapping, by = "incident_type", all.x = TRUE)
@@ -79,15 +80,22 @@ fema_desc <- aggregate(incident_type ~ incident_category_man, fema, function(x){
 fema_desc$incident_category_man <- factor(fema_desc$incident_category_man, levels = c("Extreme Weather", "Fire", "Geological", "Human Cause", "Water", "Wind", "Other"))
 
 fema_desc <- merge(fema_desc,
-                   select(aggregate(disaster_number ~ incident_category_man, fema, function(x){length(unique(x))}), incident_category_man, "nr_disasters" = disaster_number),
+                   select(aggregate(disaster_number ~ incident_category_man, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){length(unique(x))}), incident_category_man, "nr_disasters" = disaster_number),
                    by = "incident_category_man", all.x = TRUE)
 
 fema_desc <- merge(fema_desc,
-                   select(aggregate(date_declaration ~ incident_category_man, fema, function(x){paste0(min(x), " - ", max(x))}), incident_category_man, "date_range" = date_declaration),
+                   select(aggregate(date_declaration ~ incident_category_man, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){paste0(min(x), " - ", max(x))}), incident_category_man, "date_range" = date_declaration),
                    by = "incident_category_man", all.x = TRUE)
+
+zillow_county$fips_code <- fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips)
 
 fema_desc <- merge(fema_desc,
-                   select(aggregate(place_code ~ incident_category_man, fema, function(x){length(unique(x))}), incident_category_man, "regions" = place_code),
+                   select(aggregate(place_code ~ incident_category_man, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){length(unique(x)[unique(x) %in% zillow_county$fips_code])}), incident_category_man, "regions" = place_code),
                    by = "incident_category_man", all.x = TRUE)
 
+# Save as Latex table
+fema_desc |> 
+  kbl(format = "latex", align = "r") |> 
+  kable_classic(full_width = TRUE) |> 
+  write_file(file = "tables/fema_descriptives.tex")
 
