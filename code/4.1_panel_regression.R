@@ -462,7 +462,7 @@ nr_occ_type_panel$nr_dis_lag_5_e[is.na(nr_occ_type_panel$nr_dis_lag_5_e)] <- 0
 nr_occ_type_panel$nr_dis_lag_10_e[is.na(nr_occ_type_panel$nr_dis_lag_10_e)] <- 0
 
 check_panel <- aggregate(zhvi ~ fips_code + date + data_series + incident_type, nr_occ_type_panel, function(x){length(na.omit(x))})
-sum(check_panel$zhvi > 1)
+stopifnot(sum(check_panel$zhvi > 1) == 0)
 
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
 
@@ -780,18 +780,29 @@ dummy_occ_type_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = f
                               dummy_occ_type_panel,
                               by = c("fips_code", "date", "incident_type"), all.x = T)
 
-dummy_occ_type_panel$nr_dis_lag_999 <- sapply(dummy_occ_type_panel$nr_dis_lag_999, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_0.25 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_0.5 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_0.5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_1 <- sapply(dummy_occ_type_panel$nr_dis_lag_1, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_1_e <- sapply(dummy_occ_type_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_2_e <- sapply(dummy_occ_type_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_3_e <- sapply(dummy_occ_type_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-dummy_occ_type_panel$nr_dis_lag_10_e <- sapply(dummy_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_999 <- sapply(dummy_occ_type_panel$nr_dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.25 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.5 <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_0.5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_1 <- sapply(dummy_occ_type_panel$nr_dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_1_e <- sapply(dummy_occ_type_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_2_e <- sapply(dummy_occ_type_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_3_e <- sapply(dummy_occ_type_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_5_e <- sapply(dummy_occ_type_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+dummy_occ_type_panel$nr_dis_lag_10_e <- sapply(dummy_occ_type_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
 
-check_panel <- aggregate(zhvi ~ fips_code + date + data_series, dummy_occ_type_panel, function(x){length(na.omit(x))})
+dummy_occ_type_panel$nr_dis_lag_999[is.na(dummy_occ_type_panel$nr_dis_lag_999)] <- 0
+dummy_occ_type_panel$nr_dis_lag_0.25[is.na(dummy_occ_type_panel$nr_dis_lag_0.25)] <- 0
+dummy_occ_type_panel$nr_dis_lag_0.5[is.na(dummy_occ_type_panel$nr_dis_lag_0.5)] <- 0
+dummy_occ_type_panel$nr_dis_lag_0.5_e[is.na(dummy_occ_type_panel$nr_dis_lag_0.5_e)] <- 0
+dummy_occ_type_panel$nr_dis_lag_1[is.na(dummy_occ_type_panel$nr_dis_lag_1)] <- 0
+dummy_occ_type_panel$nr_dis_lag_1_e[is.na(dummy_occ_type_panel$nr_dis_lag_1_e)] <- 0
+dummy_occ_type_panel$nr_dis_lag_2_e[is.na(dummy_occ_type_panel$nr_dis_lag_2_e)] <- 0
+dummy_occ_type_panel$nr_dis_lag_3_e[is.na(dummy_occ_type_panel$nr_dis_lag_3_e)] <- 0
+dummy_occ_type_panel$nr_dis_lag_5_e[is.na(dummy_occ_type_panel$nr_dis_lag_5_e)] <- 0
+dummy_occ_type_panel$nr_dis_lag_10_e[is.na(dummy_occ_type_panel$nr_dis_lag_10_e)] <- 0
+
+# check_panel <- aggregate(zhvi ~ fips_code + date + data_series + incident_type, dummy_occ_type_panel, function(x){length(na.omit(x))})
 
 save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, dummy_occ_type_panel, file = "data/prepared_panels.RData")
 
@@ -1003,7 +1014,40 @@ save(cost_panel, file = "data/prepared_cost_panel.RData")
 # Add disaster type
 cost_panel$incident_type <- incident_map[unlist(cost_panel$disaster_number)]
 
+# Merge with ZHVI
+cost_panel <- merge(splitstackshape::cSplit(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", "), "assistance_type" = "pp_ihp, pp_pa, pp_hmgp"), "incident_type", ", ", "long"), "assistance_type", ", ", "long"),
+                    select(cost_panel, -disaster_number),
+                    by = c("fips_code", "date", "incident_type", "assistance_type"), all.x = T)
+
+# cost_panel_ihp <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
+#                         select(subset(cost_panel, assistance_type == "pp_ihp"), -disaster_number),
+#                         by = c("fips_code", "date", "incident_type"), all.x = T)
+
+cost_panel$dis_lag_999 <- sapply(cost_panel$dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_0.25 <- sapply(cost_panel$dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_0.5 <- sapply(cost_panel$dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_0.5_e <- sapply(cost_panel$dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_1 <- sapply(cost_panel$dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_1_e <- sapply(cost_panel$dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_2_e <- sapply(cost_panel$dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_3_e <- sapply(cost_panel$dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_5_e <- sapply(cost_panel$dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+cost_panel$dis_lag_10_e <- sapply(cost_panel$dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+
+cost_panel$dis_lag_999[is.na(cost_panel$dis_lag_999)] <- 0
+cost_panel$dis_lag_0.25[is.na(cost_panel$dis_lag_0.25)] <- 0
+cost_panel$dis_lag_0.5[is.na(cost_panel$dis_lag_0.5)] <- 0
+cost_panel$dis_lag_0.5_e[is.na(cost_panel$dis_lag_0.5_e)] <- 0
+cost_panel$dis_lag_1[is.na(cost_panel$dis_lag_1)] <- 0
+cost_panel$dis_lag_1_e[is.na(cost_panel$dis_lag_1_e)] <- 0
+cost_panel$dis_lag_2_e[is.na(cost_panel$dis_lag_2_e)] <- 0
+cost_panel$dis_lag_3_e[is.na(cost_panel$dis_lag_3_e)] <- 0
+cost_panel$dis_lag_5_e[is.na(cost_panel$dis_lag_5_e)] <- 0
+cost_panel$dis_lag_10_e[is.na(cost_panel$dis_lag_10_e)] <- 0
+
 # Add economic variables
+cost_panel$year <- lubridate::year(cost_panel$date)
+cost_panel$quarter <- lubridate::quarter(cost_panel$date)
 cost_panel <- merge(cost_panel,
                     select(bea, fips_code, year, gdp_value),
                     by = c("fips_code", "year"), all.x = TRUE)
@@ -1016,25 +1060,7 @@ cost_panel <- merge(cost_panel,
                     select(qcew, "fips_code" = area_fips, year, "quarter" = qtr, avg_wkly_wage),
                     by = c("fips_code", "year", "quarter"), all.x = TRUE)
 
-save(cost_panel, file = "data/prepared_cost_panel.RData")
-
-# Merge with ZHVI
-cost_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
-                    select(cost_panel, -disaster_number),
-                    by = c("fips_code", "date", "incident_type"), all.x = T)
-
-cost_panel$nr_dis_lag_999 <- sapply(cost_panel$nr_dis_lag_999, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_0.25 <- sapply(cost_panel$nr_dis_lag_0.25, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_0.5 <- sapply(cost_panel$nr_dis_lag_0.5, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_0.5_e <- sapply(cost_panel$nr_dis_lag_0.5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_1 <- sapply(cost_panel$nr_dis_lag_1, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_1_e <- sapply(cost_panel$nr_dis_lag_1_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_2_e <- sapply(cost_panel$nr_dis_lag_2_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_3_e <- sapply(cost_panel$nr_dis_lag_3_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_5_e <- sapply(cost_panel$nr_dis_lag_5_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-cost_panel$nr_dis_lag_10_e <- sapply(cost_panel$nr_dis_lag_10_e, function(x){ifelse(is.null(unlist(x)) | is.na(unlist(x)), 0, unlist(x))})
-
-check_panel <- aggregate(zhvi ~ fips_code + date + data_series, cost_panel, function(x){length(na.omit(x))})
+# check_panel <- aggregate(zhvi ~ fips_code + date + data_series, cost_panel, function(x){length(na.omit(x))})
 
 save(cost_panel, file = "data/prepared_cost_panel.RData")
 
