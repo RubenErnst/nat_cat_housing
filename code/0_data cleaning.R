@@ -1572,6 +1572,24 @@ county_shape <- sf::st_transform(county_shape, crs = sp::CRS("+proj=longlat"))
 save(county_shape, file = "data/county_shape.RData")
 
 
+# Prepare data for plotting maps
+county_shape_plotting <- data.frame(t(data.frame(sapply(county_shape$geometry, function(x){data.frame(matrix(unlist(x), ncol = 2))}))))
+names(county_shape_plotting) <- c("lon", "lat")
+
+source("code/1_data merging.R")
+county_shape_plotting$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
+
+county_shape_plotting$lon <- sapply(county_shape_plotting$lon, paste, collapse = ", ")
+county_shape_plotting$lat <- sapply(county_shape_plotting$lat, paste, collapse = ", ")
+
+county_shape_plotting <- cbind(splitstackshape::cSplit(select(county_shape_plotting, -lat), "lon", ", ", "long"),
+                               select(splitstackshape::cSplit(select(county_shape_plotting, -lon), "lat", ", ", "long"), -fips_code))
+
+county_shape_plotting <- subset(select(county_shape_plotting, fips_code, everything()), substr(fips_code, 1, 2) %in% fips_states$state_code)
+
+save(county_shape_plotting, file = "data/county_shape_plotting.RData")
+
+
 
 ### Population estimate per county ----
 county_population <- read_csv("../../3_Data/CENSUS_Population/co-est00int-tot.csv", show_col_types = FALSE)
