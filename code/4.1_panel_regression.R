@@ -1127,7 +1127,7 @@ for (it in unique(cost_panel$incident_type)){
       if (nrow(subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.25), incident_type == it & data_series == ds & assistance_type == at)) > 0){
         eval(parse(text = paste0("spec_10_1_part <- data.frame(plm_results(plm(zhvi ~ dis_lag_0.25 + gdp_value + unemployment_rate + avg_wkly_wage, subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, gdp_value, unemployment_rate, avg_wkly_wage, dis_lag_0.25), incident_type == '", it, "' & data_series == '", ds, "' & assistance_type == '", at, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'assistance_type' = '", at, "', 'effect' = 'entity', 'spec' = 10.1)")))
       } else {
-        spec_10_1_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = '"entity"', "spec" = 10.1)
+        spec_10_1_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = "entity", "spec" = 10.1)
       }
       spec_10_1 <- rbind(spec_10_1, spec_10_1_part)
       print(paste0("Done with ", it, " - ", ds, " - ", at))
@@ -1142,7 +1142,7 @@ for (it in unique(cost_panel$incident_type)){
       if (nrow(subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.25), incident_type == it & data_series == ds & assistance_type == at)) > 0){
         eval(parse(text = paste0("spec_10_2_part <- data.frame(plm_results(plm(zhvi ~ dis_lag_0.25 + dis_lag_0.5_e + dis_lag_1_e + gdp_value + unemployment_rate + avg_wkly_wage, subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, gdp_value, unemployment_rate, avg_wkly_wage, dis_lag_0.25, dis_lag_0.5_e, dis_lag_1_e), incident_type == '", it, "' & data_series == '", ds, "' & assistance_type == '", at, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'assistance_type' = '", at, "', 'effect' = 'entity', 'spec' = 10.2)")))
       } else {
-        spec_10_2_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = '"entity"', "spec" = 10.2)
+        spec_10_2_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = "entity", "spec" = 10.2)
       }
       spec_10_2 <- rbind(spec_10_2, spec_10_2_part)
       print(paste0("Done with ", it, " - ", ds, " - ", at))
@@ -1156,9 +1156,9 @@ for (it in unique(cost_panel$incident_type)){
   for (ds in unique(cost_panel$data_series)){
     for (at in unique(cost_panel$assistance_type)){
       if (nrow(subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.25), incident_type == it & data_series == ds & assistance_type == at)) > 0){
-        eval(parse(text = paste0("spec_10_3_part <- data.frame(plm_results(plm(zhvi ~ dis_lag_0.25 + dis_lag_0.5_e + dis_lag_1_e + gdp_value + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, gdp_value, unemployment_rate, avg_wkly_wage, dis_lag_0.25, dis_lag_0.5_e, dis_lag_1_e), incident_type == '", it, "' & data_series == '", ds, "' & assistance_type == '", at, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'assistance_type' = '", at, "', 'effect' = 'entity', 'spec' = 10.3)")))
+        eval(parse(text = paste0("spec_10_3_part <- data.frame(plm_results(plm(zhvi ~ dis_lag_0.25 + dis_lag_0.5_e + dis_lag_1_e + gdp_value + unemployment_rate + avg_wkly_wage + factor(lubridate::year(date)), subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, gdp_value, unemployment_rate, avg_wkly_wage, dis_lag_0.25, dis_lag_0.5_e, dis_lag_1_e), incident_type == '", it, "' & data_series == '", ds, "' & assistance_type == '", at, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'assistance_type' = '", at, "', 'effect' = 'both', 'spec' = 10.3)")))
       } else {
-        spec_10_3_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = '"entity"', "spec" = 10.3)
+        spec_10_3_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = "entity", "spec" = 10.3)
       }
       spec_10_3 <- rbind(spec_10_3, spec_10_3_part)
       print(paste0("Done with ", it, " - ", ds, " - ", at))
