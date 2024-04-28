@@ -65,6 +65,21 @@ zillow_county_desc |>
   write_file(file = "tables/zillow_descriptives.tex")
 
 
+### Stationarity tests on Zillow ----
+zillow_county_stat <- data.frame()
+for (ds in unique(zillow_county$data_series)){
+  z_sub <- subset(zillow_county, data_series == ds & !is.na(zhvi) & fips_code %in% subset(aggregate(date ~ fips_code + data_series, subset(zillow_county, !is.na(zhvi)), function(x){length(unique(x))}), date == 290 & data_series == ds)$fips_code)
+  ips_test <- purtest(zhvi ~ trend, data = z_sub, index = c("fips_code", "date"), test = "ips", lags = "SIC")
+  zillow_county_stat <- rbind(zillow_county_stat,
+                              data.frame("Wtbar" = ips_test$statistic$statistic,
+                                         "p_value" = ips_test$statistic$p.value,
+                                         "data_series" = ds,
+                                         "comment" = "Only counties with 290 observations."))
+  print(ds)
+}
+
+openxlsx::write.xlsx(zillow_county_stat, file = "tables/zillow_stationarity.xlsx")
+
 
 ### Descriptives on FEMA ----
 rm(list = ls())
