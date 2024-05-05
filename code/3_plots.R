@@ -278,6 +278,104 @@ maps_plot <- ggarrange(map_fire, map_storm, map_flood, map_hurricane, map_snow, 
 ggsave(filename = "plots/maps_plot.pdf", plot = maps_plot, width = 12, height = 16)
 
 
+### FEMA disaster maps by incident_type - contiguous states only ----
+map_fire <- ggplot(data = subset(dis_per_region, incident_type == "Fire" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#fcdfca", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_storm <- ggplot(data = subset(dis_per_region, incident_type == "Severe Storm" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#ccd0f0", high = "#333859", na.value = "white", name = "Nr. of Severe Storms") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_flood <- ggplot(data = subset(dis_per_region, incident_type == "Flood" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#f2e5c9", high = "#a68e5e", na.value = "white", name = "Nr. of Floods") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_hurricane <- ggplot(data = subset(dis_per_region, incident_type == "Hurricane" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#b2ccd1", high = "#325961", na.value = "white", name = "Nr. of Hurricanes") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_snow <- ggplot(data = subset(dis_per_region, incident_type == "Snowstorm" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#a1e7f0", high = "#32afbf", na.value = "white", name = "Nr. of Snowstorms") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_tornado <- ggplot(data = subset(dis_per_region, incident_type == "Tornado" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#494949", linewidth = 0.2) +
+  scale_fill_gradient(low = "#dbba95", high = "#5c442a", na.value = "white", breaks = c(1,2,3), name = "Nr. of Tornados") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+maps_plot <- ggarrange(map_fire, map_storm, map_flood, map_hurricane, map_snow, map_tornado, 
+                       labels = c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"),
+                       ncol = 2, nrow = 3)
+
+ggsave(filename = "plots/maps_plot_contiguous.pdf", plot = maps_plot, width = 12, height = 13)
+
+
 
 ### Estimator heatmap ----
 heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_13_1_log.xlsx")
