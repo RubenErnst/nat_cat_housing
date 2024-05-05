@@ -2,6 +2,7 @@ rm(list = ls())
 
 library(tidyverse)
 library(ggrepel)
+library(ggpubr)
 
 
 ### Data exploration ----
@@ -145,7 +146,7 @@ ggsave(filename = "plots/zhvi_by_data_series_line.pdf", plot = zhvi_by_data_seri
 
 
 
-# FEMA disaster maps by incident_category ----
+# FEMA disaster maps by incident_type ----
 load("data/county_shape_plotting.RData")
 load("data/fema.RData")
 source("code/1_data merging.R")
@@ -170,20 +171,20 @@ source("code/1_data merging.R")
 #         axis.line = element_blank())
 
 county_shape$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
-county_shape$incident_type <- paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Biological"), collapse = ", ")
+county_shape$incident_type <- paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")
 
 dis_per_region <- aggregate(disaster_number ~ place_code + incident_type, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){length(unique(x))})
-dis_per_region <- subset(dis_per_region, incident_type %in% c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Biological"))
+dis_per_region <- subset(dis_per_region, incident_type %in% c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"))
 
-dis_per_region <- merge(splitstackshape::cSplit(data.frame(subset(county_shape, substr(fips_code, 1, 2) %in% fips_states$state_code), "incident_type" = paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Biological"), collapse = ", ")), splitCols = "incident_type", sep = ", ", direction = "long"),
+dis_per_region <- merge(splitstackshape::cSplit(data.frame(subset(county_shape, substr(fips_code, 1, 2) %in% fips_states$state_code), "incident_type" = paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")), splitCols = "incident_type", sep = ", ", direction = "long"),
                         dis_per_region,
                         by.x = c("fips_code", "incident_type"), by.y = c("place_code", "incident_type"), all.x = TRUE)
 
 
-fire_map <- ggplot(data = subset(dis_per_region, incident_type == "Fire")) +
+map_fire <- ggplot(data = subset(dis_per_region, incident_type == "Fire")) +
   geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
-  scale_fill_gradient(low = "#fac8a5", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
-  coord_sf(xlim = c(-180, -66), ylim = c(15, 71)) +
+  scale_fill_gradient(low = "#fcdfca", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
+  coord_sf(xlim = c(-180, -66), ylim = c(15, 71), crs = "WGS84") +
   theme_bw() +
   theme(axis.title = element_blank(),
         panel.grid = element_blank(),
@@ -191,7 +192,159 @@ fire_map <- ggplot(data = subset(dis_per_region, incident_type == "Fire")) +
         axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank(),
-        legend.position = "bottom")
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
 
-ggsave(filename = "plots/fire_map.pdf", plot = fire_map, width = 10, height = 7.5)
+map_storm <- ggplot(data = subset(dis_per_region, incident_type == "Severe Storm")) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#ccd0f0", high = "#333859", na.value = "white", name = "Nr. of Severe Storms") +
+  coord_sf(xlim = c(-180, -66), ylim = c(15, 71), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
 
+map_flood <- ggplot(data = subset(dis_per_region, incident_type == "Flood")) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#f2e5c9", high = "#a68e5e", na.value = "white", name = "Nr. of Floods") +
+  coord_sf(xlim = c(-180, -66), ylim = c(15, 71), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_hurricane <- ggplot(data = subset(dis_per_region, incident_type == "Hurricane")) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#b2ccd1", high = "#325961", na.value = "white", name = "Nr. of Hurricanes") +
+  coord_sf(xlim = c(-180, -66), ylim = c(15, 71), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_snow <- ggplot(data = subset(dis_per_region, incident_type == "Snowstorm")) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#a1e7f0", high = "#32afbf", na.value = "white", name = "Nr. of Snowstorms") +
+  coord_sf(xlim = c(-180, -66), ylim = c(15, 71), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_tornado <- ggplot(data = subset(dis_per_region, incident_type == "Tornado")) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#494949", linewidth = 0.2) +
+  scale_fill_gradient(low = "#dbba95", high = "#5c442a", na.value = "white", breaks = c(1,2,3), name = "Nr. of Tornados") +
+  coord_sf(xlim = c(-178, -66.8), ylim = c(18, 71.4), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+maps_plot <- ggarrange(map_fire, map_storm, map_flood, map_hurricane, map_snow, map_tornado, 
+                       labels = c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"),
+                       ncol = 2, nrow = 3)
+
+ggsave(filename = "plots/maps_plot.pdf", plot = maps_plot, width = 12, height = 16)
+
+
+
+### Estimator heatmap ----
+heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_13_1_log.xlsx")
+
+heatmap_plot <- subset(heatmap_plot, variable == "nr_dis_lag_0.5")
+
+heatmap_plot$data_series <- factor(heatmap_plot$data_series, levels = c("all_homes_bottom_tier", "all_homes_middle_tier", "all_homes_top_tier", "single_family_homes", "condo_coop", "one_bedroom", "two_bedroom", "three_bedroom", "four_bedroom", "five_plus_bedroom"))
+heatmap_plot$p_value_plot <- factor(ifelse(heatmap_plot$p_value < 0.01, "***", ifelse(heatmap_plot$p_value < 0.05, "**", ifelse(heatmap_plot$p_value < 0.1, "*", " "))), levels = c("***", "**", "*", " "))
+
+p_heatmap <- heatmap_plot |> 
+  ggplot(aes(x = data_series, y = incident_type, fill = estimate)) +
+  geom_tile() +
+  geom_text(aes(x = data_series, y = incident_type, label = p_value_plot)) +
+  scale_fill_gradient2(name = "Estimates of nr_dis_lag_0.5", low = "#f64931", mid = "white", high = "#4996ab", midpoint = 0, na.value = "grey50") +
+  # scale_discrete_manual(name = "Sign.", aesthetics = "label", values = c("p < 0.01" = "***", "p < 0.05" = "**", "p < 0.1" = "*", " " = " ")) +
+  annotate("text", x = 11, y = 13, label = "log(zhvi) ~ nr_dis_lag_0.5\n+ unemployment_rate\n+ log(avg_wkly_wage)\n+ log(gdp_value)\n+ D[year]", parse = FALSE, hjust = 0) +
+  coord_cartesian(xlim = c(1, 10), ylim = c(1, 15), clip = "off") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank())
+
+ggsave(filename = "plots/heatmap spec_13_1_log.pdf", plot = p_heatmap, width = 10, height = 10)
+
+
+# Dummy spec
+heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_13_2_log.xlsx")
+
+heatmap_plot <- subset(heatmap_plot, variable == "nr_dis_lag_0.5")
+
+heatmap_plot$data_series <- factor(heatmap_plot$data_series, levels = c("all_homes_bottom_tier", "all_homes_middle_tier", "all_homes_top_tier", "single_family_homes", "condo_coop", "one_bedroom", "two_bedroom", "three_bedroom", "four_bedroom", "five_plus_bedroom"))
+heatmap_plot$p_value_plot <- factor(ifelse(heatmap_plot$p_value < 0.01, "***", ifelse(heatmap_plot$p_value < 0.05, "**", ifelse(heatmap_plot$p_value < 0.1, "*", " "))), levels = c("***", "**", "*", " "))
+
+p_heatmap <- heatmap_plot |> 
+  ggplot(aes(x = data_series, y = incident_type, fill = estimate)) +
+  geom_tile() +
+  geom_text(aes(x = data_series, y = incident_type, label = p_value_plot)) +
+  scale_fill_gradient2(name = "Estimates of dummy_dis_lag_0.5", low = "#f64931", mid = "white", high = "#4996ab", midpoint = 0, na.value = "grey50") +
+  # scale_discrete_manual(name = "Sign.", aesthetics = "label", values = c("p < 0.01" = "***", "p < 0.05" = "**", "p < 0.1" = "*", " " = " ")) +
+  annotate("text", x = 11, y = 13, label = "log(zhvi) ~ dummy_dis_lag_0.5\n+ unemployment_rate\n+ log(avg_wkly_wage)\n+ log(gdp_value)\n+ D[year]", parse = FALSE, hjust = 0) +
+  coord_cartesian(xlim = c(1, 10), ylim = c(1, 15), clip = "off") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank())
+
+ggsave(filename = "plots/heatmap spec_13_2_log.pdf", plot = p_heatmap, width = 10, height = 10)
+
+
+# Cost spec
+heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_13_3_log.xlsx")
+
+heatmap_plot <- subset(heatmap_plot, variable == "dis_lag_0.5")
+heatmap_plot <- subset(heatmap_plot, incident_type != "Other")
+
+heatmap_plot$data_series <- factor(heatmap_plot$data_series, levels = c("all_homes_bottom_tier", "all_homes_middle_tier", "all_homes_top_tier", "single_family_homes", "condo_coop", "one_bedroom", "two_bedroom", "three_bedroom", "four_bedroom", "five_plus_bedroom"))
+heatmap_plot$p_value_plot <- factor(ifelse(heatmap_plot$p_value < 0.01, "***", ifelse(heatmap_plot$p_value < 0.05, "**", ifelse(heatmap_plot$p_value < 0.1, "*", " "))), levels = c("***", "**", "*", " "))
+
+p_heatmap <- heatmap_plot |> 
+  ggplot(aes(x = data_series, y = incident_type, fill = estimate)) +
+  geom_tile() +
+  geom_text(aes(x = data_series, y = incident_type, label = p_value_plot)) +
+  scale_fill_gradient2(name = "Estimates of cost_dis_lag_0.5", low = "#f64931", mid = "white", high = "#4996ab", midpoint = 0, na.value = "grey50") +
+  # scale_discrete_manual(name = "Sign.", aesthetics = "label", values = c("p < 0.01" = "***", "p < 0.05" = "**", "p < 0.1" = "*", " " = " ")) +
+  annotate("text", x = 11, y = 13, label = "log(zhvi) ~ cost_dis_lag_0.5\n+ unemployment_rate\n+ log(avg_wkly_wage)\n+ log(gdp_value)\n+ D[year]", parse = FALSE, hjust = 0) +
+  coord_cartesian(xlim = c(1, 10), ylim = c(1, 15), clip = "off") +
+  facet_wrap(~assistance_type) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank())
+
+ggsave(filename = "plots/heatmap spec_13_3_log.pdf", plot = p_heatmap, width = 30, height = 10)
