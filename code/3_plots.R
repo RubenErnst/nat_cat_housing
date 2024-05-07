@@ -446,3 +446,28 @@ p_heatmap <- heatmap_plot |>
         axis.title = element_blank())
 
 ggsave(filename = "plots/heatmap spec_13_3_log.pdf", plot = p_heatmap, width = 30, height = 10)
+
+
+# First difference
+heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_14_log.xlsx")
+
+heatmap_plot <- subset(heatmap_plot, variable == "nr_dis_lag_999")
+
+heatmap_plot$data_series <- factor(heatmap_plot$data_series, levels = c("all_homes_bottom_tier", "all_homes_middle_tier", "all_homes_top_tier", "single_family_homes", "condo_coop", "one_bedroom", "two_bedroom", "three_bedroom", "four_bedroom", "five_plus_bedroom"))
+heatmap_plot$p_value_plot <- factor(ifelse(heatmap_plot$p_value < 0.01, "***", ifelse(heatmap_plot$p_value < 0.05, "**", ifelse(heatmap_plot$p_value < 0.1, "*", " "))), levels = c("***", "**", "*", " "))
+
+p_heatmap <- heatmap_plot |> 
+  ggplot(aes(x = data_series, y = incident_type, fill = estimate)) +
+  geom_tile() +
+  geom_text(aes(x = data_series, y = incident_type, label = p_value_plot)) +
+  scale_fill_gradient2(name = "Estimates of nr_dis_lag_999", low = "#f64931", mid = "white", high = "#4996ab", midpoint = 0, na.value = "grey50") +
+  # scale_discrete_manual(name = "Sign.", aesthetics = "label", values = c("p < 0.01" = "***", "p < 0.05" = "**", "p < 0.1" = "*", " " = " ")) +
+  annotate("text", x = 11, y = 13, label = "log(zhvi) ~ nr_dis_lag_999\n+ unemployment_rate\n+ log(avg_wkly_wage)", parse = FALSE, hjust = 0) +
+  coord_cartesian(xlim = c(1, 10), ylim = c(1, 15), clip = "off") +
+  facet_wrap(~time_period, nrow = 3) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank(),
+        legend.position = "right")
+
+ggsave(filename = "plots/heatmap spec_14_1_log.pdf", plot = p_heatmap, width = 30, height = 20)
