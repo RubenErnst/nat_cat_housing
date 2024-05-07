@@ -556,3 +556,56 @@ spec_12_3_log <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + 
                        data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + incident_type + factor(lubridate::year(date)) + gdp_value + unemployment_rate + avg_wkly_wage, subset(select(cost_agg_panel, fips_code, date, zhvi, data_series, incident_type, gdp_value, unemployment_rate, avg_wkly_wage, nr_dis_lag_0.25, nr_dis_lag_0.5_e, nr_dis_lag_1_e), data_series == "five_plus_bedroom"), index = c("fips_code", "date"), model = "within")), "data_series" = "five_plus_bedroom", "effect" = "both", "spec" = "12.3_log"))
 
 openxlsx::write.xlsx(rbind(spec_12_1_log, spec_12_2_log, spec_12_3_log), file = "results/panel_spec_12_log.xlsx")
+
+
+### Spec 13 log ----
+# Nr. dis panel, log(zhvi), log(gdp_value), log(avg_wkly_wage), time FE on year
+
+spec_13_1_log <- data.frame()
+for (it in unique(nr_occ_type_panel$incident_type)){
+  for (ds in unique(nr_occ_type_panel$data_series)){
+    if ((nrow(subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds)) > 0) & (sum(select(subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds), starts_with("nr_dis")), na.rm = TRUE) > 0)){
+      eval(parse(text = paste0("spec_13_1_part <- data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage) + log(gdp_value) + factor(lubridate::year(date)), subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == '", it, "' & data_series == '", ds, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'effect' = 'both', 'spec' = '13.1_log')")))
+    } else {
+      spec_13_1_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "effect" = "both", "spec" = "13.1_log")
+    }
+    spec_13_1_log <- rbind(spec_13_1_log, spec_13_1_part)
+    print(paste0("Done with ", it, " - ", ds))
+  }
+}
+
+openxlsx::write.xlsx(spec_13_1_log, file = "results/panel_spec_13_1_log.xlsx")
+
+# Dummy dis panel, log(zhvi), log(gdp_value), log(avg_wkly_wage), time FE on year
+spec_13_2_log <- data.frame()
+for (it in unique(dummy_occ_type_panel$incident_type)){
+  for (ds in unique(dummy_occ_type_panel$data_series)){
+    if ((nrow(subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds)) > 0) & (sum(select(subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds), starts_with("nr_dis")), na.rm = TRUE) > 0)){
+      eval(parse(text = paste0("spec_13_2_part <- data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage) + log(gdp_value) + factor(lubridate::year(date)), subset(select(dummy_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == '", it, "' & data_series == '", ds, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'effect' = 'both', 'spec' = '13.2_log')")))
+    } else {
+      spec_13_2_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "effect" = "both", "spec" = "13.2_log")
+    }
+    spec_13_2_log <- rbind(spec_13_2_log, spec_13_2_part)
+    print(paste0("Done with ", it, " - ", ds))
+  }
+}
+
+openxlsx::write.xlsx(spec_13_2_log, file = "results/panel_spec_13_2_log.xlsx")
+
+spec_13_3_log <- data.frame()
+for (it in unique(cost_panel$incident_type)){
+  for (ds in unique(cost_panel$data_series)){
+    for (at in unique(cost_panel$assistance_type)){
+      if ((nrow(subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds & assistance_type == at)) > 0) & (sum(select(subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == it & data_series == ds & assistance_type == at), starts_with("dis_")), na.rm = TRUE) > 0)){
+        eval(parse(text = paste0("spec_13_3_part <- data.frame(plm_results(plm(log(zhvi) ~ dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage) + log(gdp_value) + factor(lubridate::year(date)), subset(select(cost_panel, fips_code, date, zhvi, data_series, incident_type, assistance_type, dis_lag_0.5, gdp_value, unemployment_rate, avg_wkly_wage), incident_type == '", it, "' & data_series == '", ds, "' & assistance_type == '", at, "'), index = c('fips_code', 'date'), model = 'within', effect = 'individual')), 'incident_type' = '", it, "',  'data_series' = '", ds, "', 'assistance_type' = '", at, "', 'effect' = 'both', 'spec' = '13.3_log')")))
+      } else {
+        spec_13_3_part <- data.frame("variable" = "EMPTY MODEL", "estimate" = NA, "std_error" = NA, "t_value" = NA, "p_value" = NA, "model" = NA, "rsq" = NA, "adj_rsq" = NA, "fstatistic" = NA, "fstat_pvalue" = NA, "nr_obs" = 0, "incident_type" = it,  "data_series" = ds, "assistance_type" = at, "effect" = "both", "spec" = "13.3_log")
+      }
+      spec_13_3_log <- rbind(spec_13_3_log, spec_13_3_part)
+      print(paste0("Done with ", it, " - ", ds, " - ", at))
+    }
+  }
+}
+
+openxlsx::write.xlsx(spec_13_3_log, file = "results/panel_spec_13_3_log.xlsx")
+
