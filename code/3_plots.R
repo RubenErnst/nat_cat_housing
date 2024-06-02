@@ -28,7 +28,7 @@ stopifnot(any(aggregate(zhvi ~ fips_code + date + data_series, subset(zillow_cou
 # FEMA disasters per type per year
 load("data/fema.RData")
 
-f_hist_plot <- aggregate(disaster_number ~ incident_type + lubridate::year(date_incident_begin), fema, function(x){length(unique(x))}) |> 
+f_hist_plot <- aggregate(disaster_number ~ incident_type + lubridate::year(date_incident_begin), subset(fema, declaration_type == "Major Disaster"), function(x){length(unique(x))}) |> 
   select("nr_dis" = disaster_number, incident_type, "year" = "lubridate::year(date_incident_begin)") |> 
   subset(year >= 2000) |> 
   ggplot(aes(x = year, y = nr_dis)) +
@@ -173,7 +173,7 @@ source("code/1_data merging.R")
 county_shape$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
 county_shape$incident_type <- paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")
 
-dis_per_region <- aggregate(disaster_number ~ place_code + incident_type, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){length(unique(x))})
+dis_per_region <- aggregate(disaster_number ~ place_code + incident_type, subset(fema, date_incident_begin >= as.Date("2000-01-01") & declaration_type == "Major Disaster"), function(x){length(unique(x))})
 dis_per_region <- subset(dis_per_region, incident_type %in% c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"))
 
 dis_per_region <- merge(splitstackshape::cSplit(data.frame(subset(county_shape, substr(fips_code, 1, 2) %in% fips_states$state_code), "incident_type" = paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")), splitCols = "incident_type", sep = ", ", direction = "long"),
@@ -471,3 +471,9 @@ p_heatmap <- heatmap_plot |>
         legend.position = "right")
 
 ggsave(filename = "plots/heatmap spec_14_1_log.pdf", plot = p_heatmap, width = 30, height = 20)
+
+
+
+### Check for multiple disaster types per region per period ----
+fema_multis <- aggregate(incident_type ~ data_series + fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, data_series, incident_type, nr_dis_lag_0.5), nr_dis_lag_0.5 > 0), function(x){length(unique(na.omit(x)))})
+save(fema_multis, file = "results/fema_multis.RData")
