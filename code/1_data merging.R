@@ -37,7 +37,7 @@ fips_unpad <- function(fips_code){
 
 plm_results <- function(plm_obj){
   stopifnot(class(plm_obj)[1] == "plm")
-  summ <- summary(plm_obj)
+  summ <- summary(plm_obj, vcov = function(x) vcovHC(x, method = "arellano"))
   out <- data.frame("variable" = row.names(summ$coefficients),
                     "estimate" = data.frame(summ$coefficients)[,1],
                     "std_error" = data.frame(summ$coefficients)[,2],
