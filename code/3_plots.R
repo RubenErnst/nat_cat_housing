@@ -477,3 +477,39 @@ ggsave(filename = "plots/heatmap spec_14_1_log.pdf", plot = p_heatmap, width = 3
 ### Check for multiple disaster types per region per period ----
 fema_multis <- aggregate(incident_type ~ data_series + fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, data_series, incident_type, nr_dis_lag_0.5), nr_dis_lag_0.5 > 0), function(x){length(unique(na.omit(x)))})
 save(fema_multis, file = "results/fema_multis.RData")
+
+
+### Map to show Hurricane Katrina declaration types ----
+load("data/county_shape.RData")
+katrina_path <- openxlsx::read.xlsx("data/katrina_wind_path.xlsx")
+
+katrina_path$wind_kph <- katrina_path$wind_mph * 1.60934
+
+katrina <- subset(fema, grepl("katrina", disaster_name, ignore.case = TRUE))
+katrina <- arrange(unique(select(katrina, "fips_code" = place_code, declaration_type)), desc(declaration_type))
+katrina <- katrina[!duplicated(katrina$fips_code),]
+
+county_shape$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
+katrina_plot <- merge(subset(county_shape, STATEFP %in% fips_states$state_code),
+                      katrina,
+                      by = "fips_code", all.x = TRUE)
+
+map_katrina <- ggplot(data = subset(katrina_plot, !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = declaration_type), color = "#212121") +
+  scale_fill_manual(values = c("Emergency" = "#ffbcb3", "Major Disaster" = "#f64931"), na.value = "white", name = "Declaration Type") +
+  geom_point(data = katrina_path, mapping = aes(x = long, y = lat, size = wind_kph), shape = 21, fill = "#00000020", color = "black", stroke = 0.25) +
+  scale_size_continuous(range = c(10, 15), name = "Wind Speed (km/h)") +
+  # scale_colour_manual(values = c("black", "black", "black")) +
+  coord_sf(xlim = c(-125, -66), ylim = c(20, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "right")
+
+ggsave(filename = "plots/katrina_map.pdf", plot = map_katrina, width = 10, height = 5)
+# ggsave(filename = "plots/katrina_map.png", plot = map_katrina, width = 10, height = 5)
+
