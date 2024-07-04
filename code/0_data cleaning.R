@@ -134,6 +134,7 @@ fema <- merge(fema, select(fema_summaries, -id, -hash, -last_refresh), by = "dis
 # Fix FIPS codes
 source("code/1_data merging.R")
 fema <- merge(fema, select(fips_states, state_abbr, state_code), by.x = "state_code", by.y = "state_abbr", all.x = TRUE)
+fema <- subset(fema, nchar(place_code) == 5) # Remove special educational areas and tribal zones
 fema$temp_county_code <- sapply(fema$place_code, function(x){substr(as.character(x), max(nchar(as.character(x)) - 3 + 1, 1), nchar(as.character(x)))})
 
 fema$place_code <- fips_pad(fema$state_code.y, fema$temp_county_code)
