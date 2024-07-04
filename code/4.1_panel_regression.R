@@ -328,16 +328,16 @@ incident_type_dict <- subset(unique(select(fema, disaster_number, incident_type)
 incident_type_dict$incident_type[is.na(incident_type_dict$incident_type)] <- "Other"
 
 incident_map <- setNames(incident_type_dict$incident_type, incident_type_dict$disaster_number)
-nr_occ_type_panel$dis_lag_999 <- incident_map[unlist(nr_occ_type_panel$dis_lag_999)]
-nr_occ_type_panel$dis_lag_0.25 <- incident_map[unlist(nr_occ_type_panel$dis_lag_0.25)]
-nr_occ_type_panel$dis_lag_0.5 <- incident_map[unlist(nr_occ_type_panel$dis_lag_0.5)]
-nr_occ_type_panel$dis_lag_0.5_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_0.5_e)]
-nr_occ_type_panel$dis_lag_1 <- incident_map[unlist(nr_occ_type_panel$dis_lag_1)]
-nr_occ_type_panel$dis_lag_1_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_1_e)]
-nr_occ_type_panel$dis_lag_2_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_2_e)]
-nr_occ_type_panel$dis_lag_3_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_3_e)]
-nr_occ_type_panel$dis_lag_5_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_5_e)]
-nr_occ_type_panel$dis_lag_10_e <- incident_map[unlist(nr_occ_type_panel$dis_lag_10_e)]
+nr_occ_type_panel$dis_lag_999 <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_999))]
+nr_occ_type_panel$dis_lag_0.25 <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_0.25))]
+nr_occ_type_panel$dis_lag_0.5 <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_0.5))]
+nr_occ_type_panel$dis_lag_0.5_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_0.5_e))]
+nr_occ_type_panel$dis_lag_1 <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_1))]
+nr_occ_type_panel$dis_lag_1_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_1_e))]
+nr_occ_type_panel$dis_lag_2_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_2_e))]
+nr_occ_type_panel$dis_lag_3_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_3_e))]
+nr_occ_type_panel$dis_lag_5_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_5_e))]
+nr_occ_type_panel$dis_lag_10_e <- incident_map[as.character(unlist(nr_occ_type_panel$dis_lag_10_e))]
 
 nr_occ_type_panel <- subset(nr_occ_type_panel, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e)))
 
@@ -349,61 +349,61 @@ temp_nr_occ_type_panel <- data.frame()
 for (it in unique(incident_type_dict$incident_type)){
   # This is not ideal but the agg functions fail otherwise
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_999), dis_lag_999 == it)) > 0){
-    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){ifelse(is.na(x), 0, length(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
+    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){length(na.omit(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
   } else {
     temp_1 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_999" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it)) > 0){
-    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
+    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
   } else {
     temp_2 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.25" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it)) > 0){
-    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
+    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
   } else {
     temp_3 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it)) > 0){
-    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
+    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
   } else {
     temp_4 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1), dis_lag_1 == it)) > 0){
-    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
+    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
   } else {
     temp_5 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1_e), dis_lag_1_e == it)) > 0){
-    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
+    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
   } else {
     temp_6 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_2_e), dis_lag_2_e == it)) > 0){
-    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
+    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
   } else {
     temp_7 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_2_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_3_e), dis_lag_3_e == it)) > 0){
-    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
+    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
   } else {
     temp_8 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_3_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_5_e), dis_lag_5_e == it)) > 0){
-    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
+    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
   } else {
     temp_9 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel, fips_code, date, dis_lag_10_e), dis_lag_10_e == it)) > 0){
-    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
+    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
   } else {
     temp_10 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_10_e" = NA)
   }
@@ -1343,61 +1343,61 @@ temp_nr_occ_type_panel_maj_fmag <- data.frame()
 for (it in unique(incident_type_dict$incident_type)){
   # This is not ideal but the agg functions fail otherwise
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_999), dis_lag_999 == it)) > 0){
-    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){ifelse(is.na(x), 0, length(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
+    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){length(na.omit(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
   } else {
     temp_1 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_999" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it)) > 0){
-    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
+    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
   } else {
     temp_2 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.25" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it)) > 0){
-    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
+    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
   } else {
     temp_3 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it)) > 0){
-    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
+    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
   } else {
     temp_4 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1), dis_lag_1 == it)) > 0){
-    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
+    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
   } else {
     temp_5 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1_e), dis_lag_1_e == it)) > 0){
-    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
+    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
   } else {
     temp_6 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_2_e), dis_lag_2_e == it)) > 0){
-    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
+    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
   } else {
     temp_7 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_2_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_3_e), dis_lag_3_e == it)) > 0){
-    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
+    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
   } else {
     temp_8 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_3_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_5_e), dis_lag_5_e == it)) > 0){
-    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
+    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
   } else {
     temp_9 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_10_e), dis_lag_10_e == it)) > 0){
-    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
+    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj_fmag, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
   } else {
     temp_10 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_10_e" = NA)
   }
@@ -1433,16 +1433,16 @@ nr_occ_type_panel_maj_fmag <- merge(splitstackshape::cSplit(data.frame("fips_cod
                                     nr_occ_type_panel_maj_fmag,
                                     by = c("fips_code", "date", "incident_type"), all.x = T)
 
-nr_occ_type_panel_maj_fmag$nr_dis_lag_999 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_1 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_1_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_2_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_3_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_5_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj_fmag$nr_dis_lag_10_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_999 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_1 <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_1_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_2_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_3_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_5_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj_fmag$nr_dis_lag_10_e <- sapply(nr_occ_type_panel_maj_fmag$nr_dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
 
 nr_occ_type_panel_maj_fmag$nr_dis_lag_999[is.na(nr_occ_type_panel_maj_fmag$nr_dis_lag_999)] <- 0
 nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25[is.na(nr_occ_type_panel_maj_fmag$nr_dis_lag_0.25)] <- 0
@@ -1584,20 +1584,20 @@ nr_occ_type_panel_maj$dis_lag_10_e <- as.integer(nr_occ_type_panel_maj$dis_lag_1
 
 # Disaster 1110 has two qualifications: Fire and NA --> remove NA
 incident_type_dict <- subset(unique(select(fema, disaster_number, incident_type)), !(is.na(incident_type) & disaster_number == 1110))
-# 4 Disasters have no qualification: move to Other category
+# 5 Disasters have no qualification: move to Other category
 incident_type_dict$incident_type[is.na(incident_type_dict$incident_type)] <- "Other"
 
 incident_map <- setNames(incident_type_dict$incident_type, incident_type_dict$disaster_number)
-nr_occ_type_panel_maj$dis_lag_999 <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_999)]
-nr_occ_type_panel_maj$dis_lag_0.25 <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_0.25)]
-nr_occ_type_panel_maj$dis_lag_0.5 <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_0.5)]
-nr_occ_type_panel_maj$dis_lag_0.5_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_0.5_e)]
-nr_occ_type_panel_maj$dis_lag_1 <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_1)]
-nr_occ_type_panel_maj$dis_lag_1_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_1_e)]
-nr_occ_type_panel_maj$dis_lag_2_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_2_e)]
-nr_occ_type_panel_maj$dis_lag_3_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_3_e)]
-nr_occ_type_panel_maj$dis_lag_5_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_5_e)]
-nr_occ_type_panel_maj$dis_lag_10_e <- incident_map[unlist(nr_occ_type_panel_maj$dis_lag_10_e)]
+nr_occ_type_panel_maj$dis_lag_999 <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_999))]
+nr_occ_type_panel_maj$dis_lag_0.25 <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_0.25))]
+nr_occ_type_panel_maj$dis_lag_0.5 <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_0.5))]
+nr_occ_type_panel_maj$dis_lag_0.5_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_0.5_e))]
+nr_occ_type_panel_maj$dis_lag_1 <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_1))]
+nr_occ_type_panel_maj$dis_lag_1_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_1_e))]
+nr_occ_type_panel_maj$dis_lag_2_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_2_e))]
+nr_occ_type_panel_maj$dis_lag_3_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_3_e))]
+nr_occ_type_panel_maj$dis_lag_5_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_5_e))]
+nr_occ_type_panel_maj$dis_lag_10_e <- incident_map[as.character(unlist(nr_occ_type_panel_maj$dis_lag_10_e))]
 
 nr_occ_type_panel_maj <- subset(nr_occ_type_panel_maj, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e)))
 
@@ -1609,61 +1609,62 @@ temp_nr_occ_type_panel_maj <- data.frame()
 for (it in unique(incident_type_dict$incident_type)){
   # This is not ideal but the agg functions fail otherwise
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_999), dis_lag_999 == it)) > 0){
-    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){ifelse(is.na(x), 0, length(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
+    temp_1 <- select(data.frame(aggregate(dis_lag_999 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_999), dis_lag_999 == it), function(x){length(na.omit(x))}), "incident_type" = it), fips_code, date, incident_type, "nr_dis_lag_999" = dis_lag_999)
   } else {
-    temp_1 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_999" = NA)
+    # Escape behavior, code 01100 does not exist and hence will be dropped in merge with Zillow
+    temp_1 <- data.frame("fips_code" = "01100", "incident_type" = it, "date" = as.Date("2000-01-31"), "nr_dis_lag_999" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it)) > 0){
-    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
+    temp_2 <- select(aggregate(dis_lag_0.25 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.25), dis_lag_0.25 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.25" = dis_lag_0.25)
   } else {
     temp_2 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.25" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it)) > 0){
-    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
+    temp_3 <- select(aggregate(dis_lag_0.5 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5), dis_lag_0.5 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5" = dis_lag_0.5)
   } else {
     temp_3 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it)) > 0){
-    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
+    temp_4 <- select(aggregate(dis_lag_0.5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_0.5_e), dis_lag_0.5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_0.5_e" = dis_lag_0.5_e)
   } else {
     temp_4 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_0.5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1), dis_lag_1 == it)) > 0){
-    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
+    temp_5 <- select(aggregate(dis_lag_1 ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1), dis_lag_1 == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1" = dis_lag_1)
   } else {
     temp_5 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1_e), dis_lag_1_e == it)) > 0){
-    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
+    temp_6 <- select(aggregate(dis_lag_1_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_1_e), dis_lag_1_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_1_e" = dis_lag_1_e)
   } else {
     temp_6 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_1_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_2_e), dis_lag_2_e == it)) > 0){
-    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
+    temp_7 <- select(aggregate(dis_lag_2_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_2_e), dis_lag_2_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_2_e" = dis_lag_2_e)
   } else {
     temp_7 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_2_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_3_e), dis_lag_3_e == it)) > 0){
-    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
+    temp_8 <- select(aggregate(dis_lag_3_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_3_e), dis_lag_3_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_3_e" = dis_lag_3_e)
   } else {
     temp_8 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_3_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_5_e), dis_lag_5_e == it)) > 0){
-    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
+    temp_9 <- select(aggregate(dis_lag_5_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_5_e), dis_lag_5_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_5_e" = dis_lag_5_e)
   } else {
     temp_9 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_5_e" = NA)
   }
   
   if (nrow(subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_10_e), dis_lag_10_e == it)) > 0){
-    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){ifelse(is.na(x), 0, length(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
+    temp_10 <- select(aggregate(dis_lag_10_e ~ fips_code + date, subset(select(nr_occ_type_panel_maj, fips_code, date, dis_lag_10_e), dis_lag_10_e == it), function(x){length(na.omit(x))}), fips_code, date, "nr_dis_lag_10_e" = dis_lag_10_e)
   } else {
     temp_10 <- data.frame("fips_code" = "01100", "date" = as.Date("2000-01-31"), "nr_dis_lag_10_e" = NA)
   }
@@ -1699,16 +1700,16 @@ nr_occ_type_panel_maj <- merge(splitstackshape::cSplit(data.frame("fips_code" = 
                                nr_occ_type_panel_maj,
                                by = c("fips_code", "date", "incident_type"), all.x = T)
 
-nr_occ_type_panel_maj$nr_dis_lag_999 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_1 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_1_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_2_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_3_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_5_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
-nr_occ_type_panel_maj$nr_dis_lag_10_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_999 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_999, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_0.25 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.25, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_0.5 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.5, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_0.5_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_0.5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_1 <- sapply(nr_occ_type_panel_maj$nr_dis_lag_1, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_1_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_1_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_2_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_2_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_3_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_3_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_5_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_5_e, function(x){ifelse(is.null(x), 0, unlist(x))})
+# nr_occ_type_panel_maj$nr_dis_lag_10_e <- sapply(nr_occ_type_panel_maj$nr_dis_lag_10_e, function(x){ifelse(is.null(x), 0, unlist(x))})
 
 nr_occ_type_panel_maj$nr_dis_lag_999[is.na(nr_occ_type_panel_maj$nr_dis_lag_999)] <- 0
 nr_occ_type_panel_maj$nr_dis_lag_0.25[is.na(nr_occ_type_panel_maj$nr_dis_lag_0.25)] <- 0
