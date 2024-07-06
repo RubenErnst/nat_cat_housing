@@ -1372,8 +1372,8 @@ dbDisconnect(hmda_db)
 
 ### Load NRI data ----
 nri_counties <- read_csv("../../3_Data/NRI_Table_Counties/NRI_Table_Counties.csv")
-nri_tribal <- read_csv("../../3_Data/NRI_Table_Tribal_Counties/NRI_Table_Tribal_Counties.csv") |> 
-  select(-names(nri_tribal)[!names(nri_tribal) %in% names(nri_counties)])
+nri_tribal <- read_csv("../../3_Data/NRI_Table_Tribal_Counties/NRI_Table_Tribal_Counties.csv")
+nri_tribal <- select(nri_tribal, -names(nri_tribal)[!names(nri_tribal) %in% names(nri_counties)])
 
 # Adjust column names for pivot with automatic name coercion
 names(nri_counties)[sapply(names(nri_counties), function(x){length(unlist(str_extract_all(x, "_"))) > 1})] <- str_replace(str_replace(names(nri_counties)[sapply(names(nri_counties), function(x){length(unlist(str_extract_all(x, "_"))) > 1})], "EXP_AREA", "EXPAREA"), "ALR_NPCTL", "ALRNPCTL")
