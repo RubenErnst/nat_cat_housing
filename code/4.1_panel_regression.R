@@ -1798,3 +1798,49 @@ nr_occ_type_panel_maj <- merge(nr_occ_type_panel_maj,
 
 save(nr_occ_type_panel_maj, file = "data/nr_occ_type_panel_maj.RData")
 
+
+
+### Declaration type panel ----
+load("data/fema_panel.RData")
+
+decl_type_panel <- splitstackshape::cSplit(fema_panel, splitCols = c("dis_lag_999", "dis_lag_0.25", "dis_lag_0.5", "dis_lag_0.5_e", "dis_lag_1", "dis_lag_1_e", "dis_lag_2_e", "dis_lag_3_e", "dis_lag_5_e", "dis_lag_10_e"), sep = ", ", direction = "long")
+
+decl_type_dict <- unique(select(fema, disaster_number, declaration_type))
+
+decl_type_map <- setNames(decl_type_dict$declaration_type, decl_type_dict$disaster_number)
+decl_type_panel$dis_lag_999 <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_999))]
+decl_type_panel$dis_lag_0.25 <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_0.25))]
+decl_type_panel$dis_lag_0.5 <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_0.5))]
+decl_type_panel$dis_lag_0.5_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_0.5_e))]
+decl_type_panel$dis_lag_1 <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_1))]
+decl_type_panel$dis_lag_1_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_1_e))]
+decl_type_panel$dis_lag_2_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_2_e))]
+decl_type_panel$dis_lag_3_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_3_e))]
+decl_type_panel$dis_lag_5_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_5_e))]
+decl_type_panel$dis_lag_10_e <- decl_type_map[as.character(unlist(decl_type_panel$dis_lag_10_e))]
+
+decl_type_panel <- subset(decl_type_panel, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e)))
+
+save(decl_type_panel, file = "data/decl_type_panel.RData")
+
+
+# Convert to frequency table
+decl_type_panel <- merge(merge(select(aggregate(dis_lag_0.25 ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_0.25" = dis_lag_0.25),
+                               merge(select(aggregate(dis_lag_0.5 ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_0.5" = dis_lag_0.5),
+                                     merge(select(aggregate(dis_lag_0.5_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_0.5_e" = dis_lag_0.5_e),
+                                           merge(select(aggregate(dis_lag_1 ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_1" = dis_lag_1),
+                                                 select(aggregate(dis_lag_1_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_1_e" = dis_lag_1_e),
+                                                 by = c("fips_code", "date"), all = TRUE),
+                                           by = c("fips_code", "date"), all = TRUE),
+                                     by = c("fips_code", "date"), all = TRUE),
+                               by = c("fips_code", "date"), all = TRUE),
+                         merge(select(aggregate(dis_lag_2_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_2_e" = dis_lag_2_e),
+                               merge(select(aggregate(dis_lag_3_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_3_e" = dis_lag_3_e),
+                                     merge(select(aggregate(dis_lag_5_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_5_e" = dis_lag_5_e),
+                                           select(aggregate(dis_lag_10_e ~ fips_code + date, decl_type_panel, function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, "perc_maj_10_e" = dis_lag_10_e),
+                                           by = c("fips_code", "date"), all = TRUE),
+                                     by = c("fips_code", "date"), all = TRUE),
+                               by = c("fips_code", "date"), all = TRUE),
+                         by = c("fips_code", "date"), all = TRUE)
+
+save(decl_type_panel, file = "data/decl_type_panel.RData")
