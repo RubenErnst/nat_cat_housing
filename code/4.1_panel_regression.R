@@ -341,7 +341,8 @@ nr_occ_type_panel$dis_lag_10_e <- incident_map[as.character(unlist(nr_occ_type_p
 
 nr_occ_type_panel <- subset(nr_occ_type_panel, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e)))
 
-save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+# save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+save(nr_occ_type_panel, file = "data/nr_occ_type_panel.RData")
 
 
 # Aggregate into frequency table
@@ -433,7 +434,8 @@ for (it in unique(incident_type_dict$incident_type)){
 
 nr_occ_type_panel <- arrange(temp_nr_occ_type_panel, fips_code, date, incident_type)
 
-save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+# save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+save(nr_occ_type_panel, file = "data/nr_occ_type_panel.RData")
 
 nr_occ_type_panel <- merge(splitstackshape::cSplit(data.frame("fips_code" = fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips), "date" = zillow_county$date, "zhvi" = zillow_county$zhvi, "data_series" = zillow_county$data_series, "incident_type" = paste(unique(incident_type_dict$incident_type), collapse = ", ")), "incident_type", ", ", "long"),
                            nr_occ_type_panel,
@@ -464,7 +466,8 @@ nr_occ_type_panel$nr_dis_lag_10_e[is.na(nr_occ_type_panel$nr_dis_lag_10_e)] <- 0
 check_panel <- aggregate(zhvi ~ fips_code + date + data_series + incident_type, nr_occ_type_panel, function(x){length(na.omit(x))})
 stopifnot(sum(check_panel$zhvi > 1) == 0)
 
-save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+# save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+save(nr_occ_type_panel, file = "data/nr_occ_type_panel.RData")
 
 
 spec_3_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type, subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 3.1),
@@ -574,7 +577,8 @@ nr_occ_type_panel <- merge(nr_occ_type_panel,
                            by = c("fips_code", "year", "quarter"), all.x = TRUE)
 
 
-save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+# save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
+save(nr_occ_type_panel, file = "nr_occ_type_panel.RData")
 
 # Run specification 4
 spec_4_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 4.1),
