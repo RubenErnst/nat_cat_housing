@@ -1365,6 +1365,21 @@ for (i in 1:nrow(hmda_lar_2022)){
 rm(hmda_lar_2022)
 gc()
 
+# Add FIPS mapping
+source("code/1_data merging.R")
+dbClearResult(
+  dbSendQuery(hmda_db, "CREATE TABLE fips_codes (state_code INT, county_code INT, fips_code TEXT, PRIMARY KEY (state_code, county_code), FOREIGN KEY (state_code) REFERENCES counties(county_code), FOREIGN KEY (county_code) REFERENCES counties(county_code));")
+)
+
+fips_mapping <- subset(fips_counties, county_code != "000")
+fips_mapping$fips_code <- fips_pad(fips_mapping$state_code, fips_mapping$county_code)
+fips_mapping$state_code <- as.integer(fips_mapping$state_code)
+fips_mapping$county_code <- as.integer(fips_mapping$county_code)
+for (i in 1:nrow(fips_mapping)){
+  dbClearResult(
+    dbSendQuery(hmda_db, paste0("INSERT INTO fips_codes VALUES(", fips_mapping$state_code[i], ", ", fips_mapping$county_code[i], ", '", fips_mapping$fips_code[i], "');"))
+  )
+}
 
 dbDisconnect(hmda_db)
 
