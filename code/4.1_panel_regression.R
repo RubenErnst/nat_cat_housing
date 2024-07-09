@@ -2,6 +2,8 @@ rm(list = ls())
 
 library(tidyverse)
 library(plm)
+library(DBI)
+library(RSQLite)
 
 load("data/zillow_county.RData")
 load("data/fema.RData")
@@ -1910,4 +1912,21 @@ decl_inc_type_panel <- merge(merge(select(aggregate(dis_type_lag_0.25 ~ fips_cod
                                    by = c("fips_code", "date", "incident_type"), all = TRUE),
                              by = c("fips_code", "date", "incident_type"), all = TRUE)
 
+decl_inc_type_panel[is.na(decl_inc_type_panel)] <- 0
+
 save(decl_inc_type_panel, file = "data/decl_inc_type_panel.RData")
+
+
+
+### Credit constraint panel ----
+hmda_db <- dbConnect(drv = RSQLite::SQLite(), "data/hmda_db.sqlite")
+
+dbClearResult(
+  dbSendQuery(hmda_db, "PRAGMA synchronous = 0;")
+)
+
+dti_panel <- dbGetQuery(hmda_db, "SELECT fc.fips_code, m.as_of_year, AVG(m.debt_to_income_ratio) as avg_dti FROM main m LEFT JOIN fips_codes fc ON m.state_code = fc.state_code AND m.county_code = fc.county_code GROUP BY fc.fips_code, m.as_of_year;")
+ltv_panel <- dbGetQuery(hmda_db, "SELECT fc.fips_code, m.as_of_year, AVG(m.loan_to_value_ratio) as avg_ltv FROM main m LEFT JOIN fips_codes fc ON m.state_code = fc.state_code AND m.county_code = fc.county_code GROUP BY fc.fips_code, m.as_of_year;")
+subprime_panel <- dbGetQuery(hmda_db, "SELECT fc.fips_code, m.as_of_year, AVG(intro_rate_period IS NOT NULL) as avg_perc_irp, AVG(negative_amortization IS NOT NULL) as avg_perc_namo, AVG(interest_only_payment IS NOT NULL) as avg_perc_iop FROM main m LEFT JOIN fips_codes fc ON m.state_code = fc.state_code AND m.county_code = fc.county_code GROUP BY fc.fips_code, m.as_of_year;")
+
+save(dti_panel, ltv_panel, subprime_panel, file = "data/hmda_panels.RData")
