@@ -8,8 +8,9 @@ library(RSQLite)
 load("data/fema.RData")
 load("data/fema_panel.RData")
 load("results/fema_multis.RData")
-load("data/prepared_panels.RData")
+# load("data/prepared_panels.RData")
 # load("data/prepared_cost_panel.RData")
+load("data/nr_occ_type_panel.RData")
 load("data/nr_occ_type_panel_maj.RData")
 
 source("code/1_data merging.R")
@@ -187,6 +188,10 @@ load("data/spec_5_1_panel.RData")
 spec_5_1_panel <- merge(spec_5_1_panel,
                         select(decl_type_panel, fips_code, date, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
                         by = c("fips_code", "date"), all.x = TRUE)
+spec_5_1_panel$perc_maj_0.25[is.na(spec_5_1_panel$perc_maj_0.25)] <- 0
+spec_5_1_panel$perc_maj_0.5[is.na(spec_5_1_panel$perc_maj_0.<5)] <- 0
+spec_5_1_panel$perc_maj_0.5_e[is.na(spec_5_1_panel$perc_maj_0.5_e)] <- 0
+spec_5_1_panel$perc_maj_1_e[is.na(spec_5_1_panel$perc_maj_1_e)] <- 0
 
 
 spec_1_final <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5, subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_middle_tier", "effect" = "entity", "spec" = "1.1"),
