@@ -5,6 +5,7 @@ library(kableExtra)
 
 ### Descriptives on Zillow ----
 load("data/zillow_county.RData")
+source("code/1_data merging.R")
 
 zillow_county_desc <- merge(select(aggregate(date ~ data_series, zillow_county, function(x){length(x)}), data_series, "observations" = date),
                             select(aggregate(date ~ data_series, zillow_county, min), data_series, "min_date" = date),
@@ -18,7 +19,7 @@ zillow_county_desc$date_range <- paste0(zillow_county_desc$min_date, " - ", zill
 zillow_county_desc$min_date <- NULL
 zillow_county_desc$max_date <- NULL
 
-zillow_county$temp_fips <- paste0(zillow_county$state_code_fips, zillow_county$municipal_code_fips)
+zillow_county$temp_fips <- fips_pad(zillow_county$state_code_fips, zillow_county$municipal_code_fips)
 zillow_county_desc <- merge(zillow_county_desc,
                             select(aggregate(temp_fips ~ data_series, zillow_county, function(x){length(unique(x))}), data_series, "nr_regions" = temp_fips),
                             by = "data_series", all.x = TRUE)
