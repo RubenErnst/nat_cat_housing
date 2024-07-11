@@ -580,7 +580,7 @@ nr_occ_type_panel <- merge(nr_occ_type_panel,
 
 
 # save(nr_occ_panel, dummy_occ_panel, nr_occ_type_panel, file = "data/prepared_panels.RData")
-save(nr_occ_type_panel, file = "nr_occ_type_panel.RData")
+save(nr_occ_type_panel, file = "data/nr_occ_type_panel.RData")
 
 # Run specification 4
 spec_4_1 <- rbind(data.frame(plm_results(plm(zhvi ~ nr_dis_lag_0.25 + incident_type + unemployment_rate + avg_wkly_wage, subset(select(nr_occ_type_panel, fips_code, date, zhvi, data_series, incident_type, nr_dis_lag_0.25, unemployment_rate, avg_wkly_wage), data_series == "all_homes_top_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_top_tier", "effect" = "entity", "spec" = 4.1),
