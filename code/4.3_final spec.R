@@ -189,8 +189,9 @@ spec_5_1_panel <- merge(spec_5_1_panel,
                         select(decl_type_panel, fips_code, date, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
                         by = c("fips_code", "date"), all.x = TRUE)
 spec_5_1_panel$perc_maj_0.25[is.na(spec_5_1_panel$perc_maj_0.25)] <- 0
-spec_5_1_panel$perc_maj_0.5[is.na(spec_5_1_panel$perc_maj_0.<5)] <- 0
+spec_5_1_panel$perc_maj_0.5[is.na(spec_5_1_panel$perc_maj_0.5)] <- 0
 spec_5_1_panel$perc_maj_0.5_e[is.na(spec_5_1_panel$perc_maj_0.5_e)] <- 0
+spec_5_1_panel$perc_maj_1[is.na(spec_5_1_panel$perc_maj_1)] <- 0
 spec_5_1_panel$perc_maj_1_e[is.na(spec_5_1_panel$perc_maj_1_e)] <- 0
 
 
@@ -222,6 +223,67 @@ spec_1_extension_final <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_la
                                 data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * perc_maj_0.5 + nr_dis_lag_0.5 * (assistance_q_1 + assistance_q_4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel, data_series == "single_family_homes"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "single_family_homes", "effect" = "both", "spec" = "1.11_sfh"))
 
 openxlsx::write.xlsx(spec_1_extension_final, file = "results/final/spec_1_extension_final.xlsx")
+
+
+
+### Main spec (Miro ref. 5.2) - per incident_type (no grouping)----
+spec_5_2_panel <- subset(select(nr_occ_type_panel, zhvi, fips_code, date, nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage, gdp_value, incident_type, data_series), !incident_type %in% incident_type_excl)
+
+assistance_quartiles <- unique(select(subset(fema, !incident_type %in% incident_type_excl), disaster_number, place_code, incident_type, date_incident_begin, date_incident_end, date_closeout_area, amount_ihp_approved, amount_ha_approved, amount_ona_approved, amount_pa_obligated, amount_catab_obligated, amount_catc2g_obligated, amount_hmgp_obligated))
+assistance_quartiles <- select(assistance_quartiles, place_code, incident_type, date_incident_begin, date_incident_end, amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated)
+
+assistance_panel <- unique(select(spec_5_2_panel, fips_code, date, incident_type))
+
+write_csv(assistance_panel, file = "assistance_panel.csv")
+write_csv(assistance_quartiles, file = "assistance_quartiles.csv")
+
+assistance_type_panel <- dbGetQuery(main_db, "SELECT ap.fips_code, ap.ap_date, ap.incident_type, aq.amount_ihp_approved, aq.amount_pa_obligated, aq.amount_hmgp_obligated FROM assistance_panel ap LEFT JOIN assistance_quartiles aq
+                                              ON ap.fips_code = aq.place_code
+                                              AND ap.incident_type = aq.incident_type
+                                              AND DATE(ap.ap_date, '+30 days') >= aq.date_incident_begin
+                                              AND ap.ap_date < aq.date_incident_end;")
+
+assistance_type_panel[is.na(assistance_type_panel)] <- 0
+assistance_type_panel$ap_date <- as.Date(assistance_type_panel$ap_date, format = "%Y-%m-%d")
+assistance_type_panel <- aggregate(cbind(amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated) ~ fips_code + ap_date + incident_type, assistance_type_panel, sum, na.rm = TRUE) 
+assistance_type_panel <- select(assistance_type_panel, fips_code, "date" = ap_date, everything())
+assistance_type_panel$total_assistance <- assistance_type_panel$amount_ihp_approved + assistance_type_panel$amount_pa_obligated + assistance_type_panel$amount_hmgp_obligated
+
+assistance_type_panel <- merge(merge(merge(assistance_type_panel,
+                                           select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.25), date, "p_1" = total_assistance),
+                                           by = "date", all.x = TRUE),
+                                     select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.75), date, "p_3" = total_assistance),
+                                     by = "date", all.x = TRUE),
+                               select(aggregate(total_assistance ~ date, assistance_type_panel, max), date, "max_val" = total_assistance),
+                               by = "date", all.x = TRUE)
+
+save(assistance_type_panel, file = "data/assistance_type_panel_single.RData")
+
+spec_5_2_panel <- merge(spec_5_2_panel,
+                        assistance_type_panel,
+                        by = c("fips_code", "date", "incident_type"), all.x = TRUE)
+
+spec_5_2_panel$total_assistance[is.na(spec_5_2_panel$total_assistance)] <- 0
+
+spec_5_2_panel$assistance_highest <- ifelse(spec_5_2_panel$total_assistance == spec_5_2_panel$max_val, 1, 0)
+spec_5_2_panel$assistance_q_1 <- ifelse(spec_5_2_panel$total_assistance < spec_5_2_panel$p_1, 1, 0)
+spec_5_2_panel$assistance_q_4 <- ifelse(spec_5_2_panel$total_assistance >= spec_5_2_panel$p_3, 1, 0)
+
+save(spec_5_2_panel, file = "data/spec_5_2_panel_single.RData")
+
+spec_5_2_panel$max_val <- NULL
+spec_5_2_panel$p_1 <- NULL
+spec_5_2_panel$p_3 <- NULL
+spec_5_2_panel$amount_ihp_approved <- NULL
+spec_5_2_panel$amount_pa_obligated <- NULL
+spec_5_2_panel$amount_hmgp_obligated <- NULL
+
+temp <- select(spec_5_2_panel, -starts_with("nr_dis_lag"))[!(duplicated(spec_5_2_panel[,c("fips_code", "date", "data_series", "incident_type")])),]
+spec_5_2_panel <- merge(aggregate(cbind(nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e) ~ fips_code + date + data_series + incident_type, spec_5_2_panel, sum, na.rm = TRUE),
+                        temp,
+                        by = c("fips_code", "date", "data_series", "incident_type"), all.x = TRUE);rm(temp)
+
+save(spec_5_2_panel, file = "data/spec_5_2_panel_single.RData")
 
 
 
@@ -462,25 +524,15 @@ save(spec_5_2_panel_maj, file = "data/spec_5_2_panel_maj.RData")
 # save(spec_5_2_panel, file = "data/spec_5_2_panel_wide.RData")
 
 # Merge declaration type percentages
-load("data/decl_inc_type_panel.RData")
-load("data/spec_5_2_panel.RData")
-spec_5_2_panel <- merge(spec_5_2_panel,
-                        select(decl_inc_type_panel, fips_code, date, incident_type, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
-                        by = c("fips_code", "date", "incident_type"), all.x = TRUE)
-spec_5_2_panel$perc_maj_0.25[is.na(spec_5_2_panel$perc_maj_0.25)] <- 0
-spec_5_2_panel$perc_maj_0.5[is.na(spec_5_2_panel$perc_maj_0.<5)] <- 0
-spec_5_2_panel$perc_maj_0.5_e[is.na(spec_5_2_panel$perc_maj_0.5_e)] <- 0
-spec_5_2_panel$perc_maj_1_e[is.na(spec_5_2_panel$perc_maj_1_e)] <- 0
-
-
 load("data/decl_inc_group_type_panel.RData")
 load("data/spec_5_2_panel.RData")
 spec_5_2_panel_group <- merge(spec_5_2_panel,
                               select(decl_inc_group_type_panel, fips_code, date, incident_category_man, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
                               by = c("fips_code", "date", "incident_category_man"), all.x = TRUE)
 spec_5_2_panel_group$perc_maj_0.25[is.na(spec_5_2_panel_group$perc_maj_0.25)] <- 0
-spec_5_2_panel_group$perc_maj_0.5[is.na(spec_5_2_panel_group$perc_maj_0.<5)] <- 0
+spec_5_2_panel_group$perc_maj_0.5[is.na(spec_5_2_panel_group$perc_maj_0.5)] <- 0
 spec_5_2_panel_group$perc_maj_0.5_e[is.na(spec_5_2_panel_group$perc_maj_0.5_e)] <- 0
+spec_5_2_panel_group$perc_maj_1[is.na(spec_5_2_panel_group$perc_maj_1)] <- 0
 spec_5_2_panel_group$perc_maj_1_e[is.na(spec_5_2_panel_group$perc_maj_1_e)] <- 0
 
 
@@ -543,6 +595,74 @@ spec_2_extensions <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.2
                            data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Human Cause"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Human Cause", "effect" = "both", "spec" = "2.18"))
 
 openxlsx::write.xlsx(spec_2_extensions, file = "results/final/spec_2_extensions.xlsx")
+
+
+load("data/decl_inc_group_type_panel_ng.RData")
+load("data/spec_5_2_panel_ng.RData")
+spec_5_2_panel_group <- merge(spec_5_2_panel,
+                              select(decl_inc_group_type_panel, fips_code, date, incident_category_man, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
+                              by = c("fips_code", "date", "incident_category_man"), all.x = TRUE)
+spec_5_2_panel_group$perc_maj_0.25[is.na(spec_5_2_panel_group$perc_maj_0.25)] <- 0
+spec_5_2_panel_group$perc_maj_0.5[is.na(spec_5_2_panel_group$perc_maj_0.5)] <- 0
+spec_5_2_panel_group$perc_maj_0.5_e[is.na(spec_5_2_panel_group$perc_maj_0.5_e)] <- 0
+spec_5_2_panel_group$perc_maj_1[is.na(spec_5_2_panel_group$perc_maj_1)] <- 0
+spec_5_2_panel_group$perc_maj_1_e[is.na(spec_5_2_panel_group$perc_maj_1_e)] <- 0
+spec_5_2_panel_group$assistance_highest[is.na(spec_5_2_panel_group$assistance_highest)] <- 0
+
+
+spec_2_extensions_ng <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Air"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Air", "effect" = "both", "spec" = "2.7_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Cold"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Cold", "effect" = "both", "spec" = "2.8_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Earthquake"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Earthquake", "effect" = "both", "spec" = "2.9_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Fire"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Fire", "effect" = "both", "spec" = "2.10_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Geological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Geological", "effect" = "both", "spec" = "2.11_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "People"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "People", "effect" = "both", "spec" = "2.12_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Water"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Water", "effect" = "both", "spec" = "2.13_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Air"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Air", "effect" = "both", "spec" = "2.13_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Cold"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Cold", "effect" = "both", "spec" = "2.14_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Earthquake"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Earthquake", "effect" = "both", "spec" = "2.15_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Fire"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Fire", "effect" = "both", "spec" = "2.16_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Geological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Geological", "effect" = "both", "spec" = "2.17_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "People"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "People", "effect" = "both", "spec" = "2.18_e"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel_group, data_series == "all_homes_middle_tier" & incident_category_man == "Water"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_category_man" = "Water", "effect" = "both", "spec" = "2.19_e"))
+
+openxlsx::write.xlsx(spec_2_extensions_ng, file = "results/final/spec_2_extensions_ng.xlsx")
+
+
+# Test for ungrouped incident_types
+load("data/decl_inc_type_panel.RData")
+load("data/spec_5_2_panel_single.RData")
+spec_5_2_panel <- merge(spec_5_2_panel,
+                        select(decl_inc_type_panel, fips_code, date, incident_type, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1, perc_maj_1_e),
+                        by = c("fips_code", "date", "incident_type"), all.x = TRUE)
+spec_5_2_panel$perc_maj_0.25[is.na(spec_5_2_panel$perc_maj_0.25)] <- 0
+spec_5_2_panel$perc_maj_0.5[is.na(spec_5_2_panel$perc_maj_0.5)] <- 0
+spec_5_2_panel$perc_maj_0.5_e[is.na(spec_5_2_panel$perc_maj_0.5_e)] <- 0
+spec_5_2_panel$perc_maj_1[is.na(spec_5_2_panel$perc_maj_1)] <- 0
+spec_5_2_panel$perc_maj_1_e[is.na(spec_5_2_panel$perc_maj_1_e)] <- 0
+
+spec_2_extensions_single <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Coastal Storm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Coastal Storm", "effect" = "both", "spec" = "2.13_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Dam/Levee Break"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Dam/Levee Break", "effect" = "both", "spec" = "2.14_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Drought", "effect" = "both", "spec" = "2.15_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Earthquake"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Earthquake", "effect" = "both", "spec" = "2.16_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Fire"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Fire", "effect" = "both", "spec" = "2.17_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Fishing Losses", "effect" = "both", "spec" = "2.18_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Flood"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Flood", "effect" = "both", "spec" = "2.18_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Freezing"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Freezing", "effect" = "both", "spec" = "2.19_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Human Cause"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Human Cause", "effect" = "both", "spec" = "2.20_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Hurricane"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Hurricane", "effect" = "both", "spec" = "2.21_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Mud/Landslide"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Mud/Landslide", "effect" = "both", "spec" = "2.22_S"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Severe Ice Storm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Severe Ice Storm", "effect" = "both", "spec" = "2.23_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Severe Storm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Severe Storm", "effect" = "both", "spec" = "2.24_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Snowstorm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Snowstorm", "effect" = "both", "spec" = "2.25_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Terrorist"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Terrorist", "effect" = "both", "spec" = "2.26_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Tornado"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Tornado", "effect" = "both", "spec" = "2.27_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Tropical Storm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Tropical Storm", "effect" = "both", "spec" = "2.28_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Tsunami"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Tsunami", "effect" = "both", "spec" = "2.29_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Typhoon"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Typhoon", "effect" = "both", "spec" = "2.30_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Volcanic Eruption"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Volcanic Eruption", "effect" = "both", "spec" = "2.31_s"),
+                                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_0.25 * perc_maj_0.25 + nr_dis_lag_0.5_e * perc_maj_0.5_e + nr_dis_lag_1_e * perc_maj_1_e + (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_highest + unemployment_rate + log(avg_wkly_wage), subset(spec_5_2_panel, data_series == "all_homes_middle_tier" & incident_type == "Winter Storm"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "incident_type" = "Winter Storm", "effect" = "both", "spec" = "2.32_s"))
+
+openxlsx::write.xlsx(spec_2_extensions_single, file = "results/final/spec_2_extensions_single.xlsx")
 
 
 
@@ -668,28 +788,34 @@ openxlsx::write.xlsx(spec_3_extensions, file = "results/final/spec_3_extensions.
 spec_5_3_panel_maj <- subset(select(nr_occ_type_panel_maj, zhvi, fips_code, date, nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_1, unemployment_rate, avg_wkly_wage, gdp_value, incident_type, data_series), !incident_type %in% incident_type_excl)
 spec_5_3_panel_maj <- merge(spec_5_3_panel_maj, fema_incident_mapping, by = "incident_type", all.x = TRUE)
 
-# assistance_type_panel <- dbGetQuery(main_db, "SELECT ap.fips_code, ap.ap_date, ap.incident_category_man, aq.amount_ihp_approved, aq.amount_pa_obligated, aq.amount_hmgp_obligated FROM assistance_panel ap LEFT JOIN assistance_quartiles aq
-#                                               ON ap.fips_code = aq.place_code
-#                                               AND ap.incident_category_man = aq.incident_category_man
-#                                               AND DATE(ap.ap_date, '+30 days') >= aq.date_incident_begin
-#                                               AND ap.ap_date < aq.date_incident_end;")
-# 
-# assistance_type_panel[is.na(assistance_type_panel)] <- 0
-# assistance_type_panel$ap_date <- as.Date(assistance_type_panel$ap_date, format = "%Y-%m-%d")
-# assistance_type_panel <- aggregate(cbind(amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated) ~ fips_code + ap_date + incident_category_man, assistance_type_panel, sum, na.rm = TRUE)
-# assistance_type_panel <- select(assistance_type_panel, fips_code, "date" = ap_date, everything())
-# assistance_type_panel$total_assistance <- assistance_type_panel$amount_ihp_approved + assistance_type_panel$amount_pa_obligated + assistance_type_panel$amount_hmgp_obligated
-# 
-# assistance_type_panel <- merge(merge(merge(assistance_type_panel,
-#                                            select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.25), date, "p_1" = total_assistance),
-#                                            by = "date", all.x = TRUE),
-#                                      select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.5), date, "p_2" = total_assistance),
-#                                      by = "date", all.x = TRUE),
-#                                select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.75), date, "p_3" = total_assistance),
-#                                by = "date", all.x = TRUE)
-# 
-# save(assistance_type_panel, file = "data/assistance_type_panel.RData")
-load("data/assistance_type_panel.RData")
+assistance_quartiles <- unique(select(subset(fema, !incident_type %in% incident_type_excl), disaster_number, place_code, incident_type, date_incident_begin, date_incident_end, date_closeout_area, amount_ihp_approved, amount_ha_approved, amount_ona_approved, amount_pa_obligated, amount_catab_obligated, amount_catc2g_obligated, amount_hmgp_obligated))
+assistance_quartiles <- merge(assistance_quartiles, fema_incident_mapping, by = "incident_type", all.x = TRUE)
+assistance_quartiles <- select(assistance_quartiles, place_code, incident_category_man, date_incident_begin, date_incident_end, amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated)
+
+assistance_panel <- unique(select(spec_5_3_panel_maj, fips_code, date, incident_category_man))
+
+write_csv(assistance_panel, file = "assistance_panel.csv")
+write_csv(assistance_quartiles, file = "assistance_quartiles.csv")
+
+assistance_type_panel <- dbGetQuery(main_db, "SELECT ap.fips_code, ap.ap_date, ap.incident_category_man, aq.amount_ihp_approved, aq.amount_pa_obligated, aq.amount_hmgp_obligated FROM assistance_panel ap LEFT JOIN assistance_quartiles aq
+                                              ON ap.fips_code = aq.place_code
+                                              AND ap.incident_category_man = aq.incident_category_man
+                                              AND DATE(ap.ap_date, '+30 days') >= aq.date_incident_begin
+                                              AND ap.ap_date < aq.date_incident_end;")
+
+assistance_type_panel[is.na(assistance_type_panel)] <- 0
+assistance_type_panel$ap_date <- as.Date(assistance_type_panel$ap_date, format = "%Y-%m-%d")
+assistance_type_panel <- aggregate(cbind(amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated) ~ fips_code + ap_date + incident_category_man, assistance_type_panel, sum, na.rm = TRUE)
+assistance_type_panel <- select(assistance_type_panel, fips_code, "date" = ap_date, everything())
+assistance_type_panel$total_assistance <- assistance_type_panel$amount_ihp_approved + assistance_type_panel$amount_pa_obligated + assistance_type_panel$amount_hmgp_obligated
+
+assistance_type_panel <- merge(merge(merge(assistance_type_panel,
+                                           select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.25), date, "p_1" = total_assistance),
+                                           by = "date", all.x = TRUE),
+                                     select(aggregate(total_assistance ~ date, assistance_type_panel, quantile, probs = 0.75), date, "p_3" = total_assistance),
+                                     by = "date", all.x = TRUE),
+                               select(aggregate(total_assistance ~ date, assistance_type_panel, max), date, "max_val" = total_assistance),
+                               by = "date", all.x = TRUE)
 
 spec_5_3_panel_maj <- merge(spec_5_3_panel_maj,
                             assistance_type_panel,
