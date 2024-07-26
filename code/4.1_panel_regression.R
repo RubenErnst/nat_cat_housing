@@ -2070,7 +2070,251 @@ ORDER BY
     fips_code,
     as_of_year;")
 
-subprime_panel <- dbGetQuery(hmda_db, "SELECT fc.fips_code, m.as_of_year, AVG(intro_rate_period IS NOT NULL) as avg_perc_irp, AVG(negative_amortization IS NOT NULL) as avg_perc_namo, AVG(interest_only_payment IS NOT NULL) as avg_perc_iop FROM main m LEFT JOIN fips_codes fc ON m.state_code = fc.state_code AND m.county_code = fc.county_code GROUP BY fc.fips_code, m.as_of_year;")
+subprime_panel <- dbGetQuery(hmda_db, "SELECT fc.fips_code, m.as_of_year,
+                             AVG(intro_rate_period IS NOT NULL) as perc_irp,
+                             AVG(negative_amortization = 1) as perc_namo,
+                             AVG(interest_only_payment = 1) as perc_iop,
+                             AVG(intro_rate_period IS NOT NULL OR negative_amortization = 1 OR interest_only_payment = 1) as perc_at_least_one_namo,
+                             AVG(CASE WHEN ((intro_rate_period = 1) + (negative_amortization = 1) + (interest_only_payment = 1)) >= 2 THEN 1 ELSE 0 END) as perc_at_least_two_namo,
+                             AVG(intro_rate_period IS NOT NULL AND negative_amortization = 1 AND interest_only_payment = 1) as perc_three_namo
+                             FROM main m LEFT JOIN fips_codes fc ON m.state_code = fc.state_code AND m.county_code = fc.county_code GROUP BY fc.fips_code, m.as_of_year;")
+
+save(dti_panel_avg, dti_panel_median, ltv_panel_avg, ltv_panel_median, subprime_panel, file = "data/hmda_panels.RData")
+
+
+"SELECT
+    group1,
+    group2,
+    AVG(CASE WHEN ((irp = 1) + (namo = 1) + (iop = 1)) >= 2 THEN 1 ELSE 0 END) AS percentage_condition_met,
+FROM
+    your_table_name
+GROUP BY
+    group1,
+    group2;"
+
+
+
+#########################################################################################################################################################################################################################
+dti_panel_median_1 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, debt_to_income_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_naughties
+    WHERE
+        debt_to_income_ratio IS NOT NULL
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT debt_to_income_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(debt_to_income_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_debt_to_income_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_debt_to_income_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+dti_panel_median_2 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, debt_to_income_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_tens
+    WHERE
+        debt_to_income_ratio IS NOT NULL
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT debt_to_income_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(debt_to_income_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_debt_to_income_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_debt_to_income_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+dti_panel_median_3 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, debt_to_income_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY debt_to_income_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_twenties
+    WHERE
+        debt_to_income_ratio IS NOT NULL
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT debt_to_income_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(debt_to_income_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_debt_to_income_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_debt_to_income_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+
+ltv_panel_median_1 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, loan_to_value_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_naughties
+    WHERE
+        loan_to_value_ratio IS NOT NULL
+    AND
+        loan_to_value_ratio != -1111
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT loan_to_value_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(loan_to_value_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_loan_to_value_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_loan_to_value_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+ltv_panel_median_2 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, loan_to_value_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_tens
+    WHERE
+        loan_to_value_ratio IS NOT NULL
+    AND
+        loan_to_value_ratio != -1111
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT loan_to_value_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(loan_to_value_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_loan_to_value_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_loan_to_value_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+ltv_panel_median_3 <- dbGetQuery(hmda_db, "WITH RankedValues AS (SELECT fips_code, as_of_year, loan_to_value_ratio, 
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio) AS row_num_asc,
+        ROW_NUMBER() OVER (PARTITION BY fips_code, as_of_year ORDER BY loan_to_value_ratio DESC) AS row_num_desc,
+        COUNT(*) OVER (PARTITION BY fips_code, as_of_year) AS count
+    FROM
+        aaa_twenties
+    WHERE
+        loan_to_value_ratio IS NOT NULL
+    AND
+        loan_to_value_ratio != -1111
+),
+Medians AS (
+    SELECT
+        r.fips_code,
+        r.as_of_year,
+        CASE
+            WHEN count % 2 = 1 THEN
+                (SELECT loan_to_value_ratio FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND rv.row_num_asc = (r.count + 1) / 2)
+            ELSE
+                (SELECT AVG(loan_to_value_ratio) FROM RankedValues rv WHERE rv.fips_code = r.fips_code AND rv.as_of_year = r.as_of_year AND (rv.row_num_asc = r.count / 2 OR rv.row_num_asc = r.count / 2 + 1))
+        END AS median_loan_to_value_ratio
+    FROM
+        RankedValues r
+    GROUP BY
+        r.fips_code,
+        r.as_of_year,
+        r.count
+)
+SELECT
+    fips_code,
+    as_of_year,
+    median_loan_to_value_ratio
+FROM
+    Medians
+ORDER BY
+    fips_code,
+    as_of_year;")
+
+dti_panel_median <- rbind(dti_panel_median_1, dti_panel_median_2, dti_panel_median_3)
+ltv_panel_median <- rbind(ltv_panel_median_1, ltv_panel_median_2, ltv_panel_median_3)
 
 save(dti_panel_avg, dti_panel_median, ltv_panel_avg, ltv_panel_median, subprime_panel, file = "data/hmda_panels.RData")
 
