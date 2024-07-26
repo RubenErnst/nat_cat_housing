@@ -40,13 +40,13 @@ load("data/hmda_panels.RData")
 ltv_panel_median <- subset(ltv_panel_median, !is.na(median_loan_to_value_ratio))
 dti_panel_median <- subset(dti_panel_median, !is.na(median_debt_to_income_ratio))
 
-spec_5_3_panel_maj_wide$year <- lubridate::year(spec_5_3_panel_maj_wide$date)
-spec_5_3_panel_maj_wide <- merge(spec_5_3_panel_maj_wide,
-                                 ltv_panel_median,
-                                 by = c("fips_code", "year"), all.x = T)
-spec_5_3_panel_maj_wide <- merge(spec_5_3_panel_maj_wide,
-                                 dti_panel_median,
-                                 by = c("fips_code", "year"), all.x = T)
+spec_5_3_panel_maj$year <- lubridate::year(spec_5_3_panel_maj$date)
+spec_5_3_panel_maj <- merge(spec_5_3_panel_maj,
+                            ltv_panel_median,
+                            by.x = c("fips_code", "year"), by.y = c("fips_code", "as_of_year"), all.x = T)
+spec_5_3_panel_maj <- merge(spec_5_3_panel_maj,
+                            dti_panel_median,
+                            by.x = c("fips_code", "year"), by.y = c("fips_code", "as_of_year"), all.x = T)
 
 ltv_mapping <- list("ltv_low" = c(0, 80),
                     "ltv_medium" = c(80, 95),
@@ -64,6 +64,22 @@ spec_6_3_final_maj <- rbind(data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0
                             data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & median_debt_to_income_ratio > dti_mapping$dti_high[1] & median_debt_to_income_ratio <= dti_mapping$dti_high[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "median_dti_high", "spec" = "6.3"))
 
 openxlsx::write.xlsx(spec_6_3_final_maj, file = "results/final/spec_6_3_final_maj.xlsx")
+
+# Compile non-amortizing loan features as subprime proxies
+subprime_panel <- subset(subprime_panel, as_of_year >= 2018)
+
+subprime_mapping <- list("sp_low" = c(0, 0.05),
+                         "sp_medium" = c(0.05, 0.15),
+                         "sp_high" = c(0.15, 1))
+
+spec_6_3_extensions_maj <- rbind(data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_at_least_one_namo > subprime_mapping$sp_low[1] & perc_at_least_one_namo <= subprime_mapping$sp_low[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_at_least_one_low", "spec" = "6.3_e"),
+                                 data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_at_least_one_namo > subprime_mapping$sp_medium[1] & perc_at_least_one_namo <= subprime_mapping$sp_medium[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_at_least_one_medium", "spec" = "6.3_e"),
+                                 data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_at_least_one_namo > subprime_mapping$sp_high[1] & perc_at_least_one_namo <= subprime_mapping$sp_high[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_at_least_one_high", "spec" = "6.3_e"),
+                                 data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_three_namo > subprime_mapping$sp_low[1] & perc_three_namo <= subprime_mapping$sp_low[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_three_low", "spec" = "6.3_e"),
+                                 data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_three_namo > subprime_mapping$sp_medium[1] & perc_three_namo <= subprime_mapping$sp_medium[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_three_medium", "spec" = "6.3_e"),
+                                 data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_extreme_weather + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_maj, data_series == "all_homes_middle_tier" & perc_three_namo > subprime_mapping$sp_high[1] & perc_three_namo <= subprime_mapping$sp_high[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "sp_perc_three_high", "spec" = "6.3_e"))
+
+openxlsx::write.xlsx(spec_6_3_extensions_maj, file = "results/final/spec_6_3_extensions_maj.xlsx")
 
 
 ### Spec 6.4 (Housing type) ----
