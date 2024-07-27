@@ -29,6 +29,13 @@ fema_incident_mapping_2 <- data.frame("incident_type" = c("Flood", "Tornado", "E
                                       "incident_category_man" = c("Water", "Air", "Earthquake", "Air", "Water", "Air", "Air", "Fire", "Cold", "Cold", "Air", "Cold", "People", "Water",
                                                                   "Geological", "Geological", "Other", "People", "People", "Water", "Other", "Other", "Other", "Air", "Cold"))
 
+fema_incident_mapping_final <- data.frame("incident_type" = c("Flood", "Tornado", "Earthquake", "Severe Storm", "Drought", "Hurricane", "Typhoon", "Fire", "Severe Ice Storm", "Freezing",
+                                                              "Coastal Storm", "Snowstorm", "Fishing Losses", "Dam/Levee Break", "Mud/Landslide", "Volcanic Eruption", "Toxic Substances",
+                                                              "Human Cause", "Terrorist", "Tsunami", "Other", "Chemical", "Biological", "Tropical Storm", "Winter Storm"),
+                                          "incident_category_man" = c("Water", "Wind", "Geological", "Wind", "Other", "Wind", "Wind", "Fire", "Cold", "Cold",
+                                                                      "Wind", "Cold", "Human Cause", "Water", "Geological", "Geological", "Other",
+                                                                      "Human Cause", "Human Cause", "Water", "Other", "Other", "Other", "Wind", "Cold"))
+
 
 ### Utility functions ----
 fips_pad <- function(state_code, county_code){
