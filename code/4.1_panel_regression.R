@@ -1986,6 +1986,74 @@ decl_inc_group_type_panel[is.na(decl_inc_group_type_panel)] <- 0
 save(decl_inc_group_type_panel, file = "data/decl_inc_group_type_panel.RData")
 
 
+### Declaration type panel per incident group FINAL GROUPING ----
+load("data/fema_panel.RData")
+
+decl_inc_group_type_panel <- splitstackshape::cSplit(fema_panel, splitCols = c("dis_lag_999", "dis_lag_0.25", "dis_lag_0.5", "dis_lag_0.5_e", "dis_lag_1", "dis_lag_1_e", "dis_lag_2_e", "dis_lag_3_e", "dis_lag_5_e", "dis_lag_10_e"), sep = ", ", direction = "long")
+
+decl_type_dict <- unique(select(fema, disaster_number, declaration_type))
+
+decl_type_map <- setNames(decl_type_dict$declaration_type, decl_type_dict$disaster_number)
+decl_inc_group_type_panel$dis_type_lag_999 <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_999))]
+decl_inc_group_type_panel$dis_type_lag_0.25 <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.25))]
+decl_inc_group_type_panel$dis_type_lag_0.5 <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.5))]
+decl_inc_group_type_panel$dis_type_lag_0.5_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.5_e))]
+decl_inc_group_type_panel$dis_type_lag_1 <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_1))]
+decl_inc_group_type_panel$dis_type_lag_1_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_1_e))]
+decl_inc_group_type_panel$dis_type_lag_2_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_2_e))]
+decl_inc_group_type_panel$dis_type_lag_3_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_3_e))]
+decl_inc_group_type_panel$dis_type_lag_5_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_5_e))]
+decl_inc_group_type_panel$dis_type_lag_10_e <- decl_type_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_10_e))]
+
+# Disaster 1110 has two qualifications: Fire and NA --> remove NA
+incident_type_dict <- subset(unique(select(fema, disaster_number, incident_type)), !(is.na(incident_type) & disaster_number == 1110))
+# 4 Disasters have no qualification: move to Other category
+incident_type_dict$incident_type[is.na(incident_type_dict$incident_type)] <- "Other"
+
+incident_map <- setNames(incident_type_dict$incident_type, incident_type_dict$disaster_number)
+decl_inc_group_type_panel$dis_lag_999 <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_999))]
+decl_inc_group_type_panel$dis_lag_0.25 <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.25))]
+decl_inc_group_type_panel$dis_lag_0.5 <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.5))]
+decl_inc_group_type_panel$dis_lag_0.5_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_0.5_e))]
+decl_inc_group_type_panel$dis_lag_1 <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_1))]
+decl_inc_group_type_panel$dis_lag_1_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_1_e))]
+decl_inc_group_type_panel$dis_lag_2_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_2_e))]
+decl_inc_group_type_panel$dis_lag_3_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_3_e))]
+decl_inc_group_type_panel$dis_lag_5_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_5_e))]
+decl_inc_group_type_panel$dis_lag_10_e <- incident_map[as.character(unlist(decl_inc_group_type_panel$dis_lag_10_e))]
+
+decl_inc_group_type_panel <- subset(decl_inc_group_type_panel, !(is.na(dis_lag_999) & is.na(dis_lag_0.25) & is.na(dis_lag_0.5) & is.na(dis_lag_0.5_e) & is.na(dis_lag_1) & is.na(dis_lag_1_e) & is.na(dis_lag_2_e) & is.na(dis_lag_3_e) & is.na(dis_lag_5_e) & is.na(dis_lag_10_e) & is.na(dis_type_lag_999) & is.na(dis_type_lag_0.25) & is.na(dis_type_lag_0.5) & is.na(dis_type_lag_0.5_e) & is.na(dis_type_lag_1) & is.na(dis_type_lag_1_e) & is.na(dis_type_lag_2_e) & is.na(dis_type_lag_3_e) & is.na(dis_type_lag_5_e) & is.na(dis_type_lag_10_e)))
+
+save(decl_inc_group_type_panel, file = "data/decl_inc_group_type_panel_fg.RData")
+
+
+# Convert to frequency table
+decl_inc_group_type_panel <- pivot_longer(decl_inc_group_type_panel, cols = starts_with("dis_lag_"), names_to = "lag_name", values_to = "incident_type")
+decl_inc_group_type_panel <- merge(decl_inc_group_type_panel, fema_incident_mapping_final, by = "incident_type", all.x = TRUE)
+decl_inc_group_type_panel$incident_type <- NULL
+decl_inc_group_type_panel <- merge(merge(select(aggregate(dis_type_lag_0.25 ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_0.25"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_0.25" = dis_type_lag_0.25),
+                                         merge(select(aggregate(dis_type_lag_0.5 ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_0.5"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_0.5" = dis_type_lag_0.5),
+                                               merge(select(aggregate(dis_type_lag_0.5_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_0.5_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_0.5_e" = dis_type_lag_0.5_e),
+                                                     merge(select(aggregate(dis_type_lag_1 ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_1"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_1" = dis_type_lag_1),
+                                                           select(aggregate(dis_type_lag_1_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_1_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_1_e" = dis_type_lag_1_e),
+                                                           by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                                     by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                               by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                         by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                   merge(select(aggregate(dis_type_lag_2_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_2_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_2_e" = dis_type_lag_2_e),
+                                         merge(select(aggregate(dis_type_lag_3_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_3_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_3_e" = dis_type_lag_3_e),
+                                               merge(select(aggregate(dis_type_lag_5_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_5_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_5_e" = dis_type_lag_5_e),
+                                                     select(aggregate(dis_type_lag_10_e ~ fips_code + date + incident_category_man, subset(decl_inc_group_type_panel, lag_name == "dis_lag_10_e"), function(x){sum(x == "Major Disaster", na.rm = T) / length(x)}), fips_code, date, incident_category_man, "perc_maj_10_e" = dis_type_lag_10_e),
+                                                     by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                               by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                         by = c("fips_code", "date", "incident_category_man"), all = TRUE),
+                                   by = c("fips_code", "date", "incident_category_man"), all = TRUE)
+
+decl_inc_group_type_panel[is.na(decl_inc_group_type_panel)] <- 0
+
+save(decl_inc_group_type_panel, file = "data/decl_inc_group_type_panel_fg.RData")
+
+
 
 ### HMDA panels ----
 hmda_db <- dbConnect(drv = RSQLite::SQLite(), "data/hmda_db.sqlite")
