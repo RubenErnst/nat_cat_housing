@@ -90,10 +90,11 @@ load("data/fema.RData")
 load("data/zillow_county.RData")
 source("code/1_data merging.R")
 
-fema <- merge(fema, fema_incident_mapping, by = "incident_type", all.x = TRUE)
+# fema <- merge(fema, fema_incident_mapping, by = "incident_type", all.x = TRUE)
+fema <- merge(fema, fema_incident_mapping_final, by = "incident_type", all.x = TRUE)
 
 fema_desc <- aggregate(incident_type ~ incident_category_man, fema, function(x){paste(unique(x), collapse = ", ")})
-fema_desc$incident_category_man <- factor(fema_desc$incident_category_man, levels = c("Extreme Weather", "Fire", "Geological", "Human Cause", "Water", "Wind", "Other"))
+fema_desc$incident_category_man <- factor(fema_desc$incident_category_man, levels = c("Cold", "Fire", "Geological", "Human Cause", "Water", "Wind", "Other"))
 
 fema_desc <- merge(fema_desc,
                    select(aggregate(disaster_number ~ incident_category_man, subset(fema, date_incident_begin >= as.Date("2000-01-01")), function(x){length(unique(x))}), incident_category_man, "nr_disasters" = disaster_number),
@@ -188,3 +189,122 @@ econ_desc_out |>
   kbl(format = "latex", align = "r") |> 
   kable_classic(full_width = TRUE) |> 
   write_file(file = "tables/econ_descriptives.tex")
+
+
+
+### Descriptives on HMDA ----
+load("data/hmda_panels.RData")
+
+hmda <- merge(dti_panel_median, ltv_panel_median, by = c("fips_code", "as_of_year"), all = T)
+hmda$median_debt_to_income_ratio <- as.numeric(hmda$median_debt_to_income_ratio) / 100
+hmda$median_loan_to_value_ratio <- as.numeric(hmda$median_loan_to_value_ratio) / 100
+
+hmda <- pivot_longer(hmda, cols = c("median_debt_to_income_ratio", "median_loan_to_value_ratio"), names_to = "data_series", values_to = "value")
+hmda <- subset(hmda, value > 0)
+
+hmda_desc <- merge(select(aggregate(as_of_year ~ data_series, hmda, function(x){length(na.omit(x))}), data_series, "observations" = as_of_year),
+                   select(aggregate(as_of_year ~ data_series, hmda, min), data_series, "min_date" = as_of_year),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(as_of_year ~ data_series, hmda, max), data_series, "max_date" = as_of_year),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc$date_range <- paste0(hmda_desc$min_date, " - ", hmda_desc$max_date)
+hmda_desc$min_date <- NULL
+hmda_desc$max_date <- NULL
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(fips_code ~ data_series, hmda, function(x){length(unique(x))}), data_series, "nr_regions" = fips_code),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   as.data.frame(as.matrix(aggregate(value ~ data_series, hmda, function(x){quantile(x, c(0, 0.25, 0.5, 0.75, 1), na.rm = T)}))),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, mean), data_series, "mean_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, function(x_){density(x_, na.rm = T)$x[which.max(density(x_, na.rm = T)$y)]}), data_series, "mode_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, var), data_series, "var_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, sd), data_series, "sd_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, moments::skewness), data_series, "skewness_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- merge(hmda_desc,
+                   select(aggregate(value ~ data_series, hmda, moments::kurtosis), data_series, "kurtosis_value" = value),
+                   by = "data_series", all.x = TRUE)
+
+hmda_desc <- as.data.frame(t(hmda_desc))
+names(hmda_desc) <- hmda_desc[1, ]
+hmda_desc <- hmda_desc[-1,]
+names(hmda_desc) <- c("Debt to income ratio", "Loan to value ratio")
+row.names(hmda_desc) <- c("Observations", "Date Range", "Regions", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
+
+# Save as Latex table
+hmda_desc |> 
+  kbl(format = "latex", align = "r") |> 
+  kable_classic(full_width = TRUE) |> 
+  write_file(file = "tables/hmda_descriptives.tex")
+
+
+
+### Descriptives on NRI ----
+load("data/nri.RData")
+
+nri_composite$fips_code <- fips_pad(nri_composite$state_code, nri_composite$county_code)
+
+nri <- select(nri_composite, fips_code, risk_score_composite, eal_score_composite, eal_building_value_composite, alr_building_composite)
+nri <- pivot_longer(nri, cols = -fips_code, names_to = "data_series", values_to = "value")
+nri <- unique(nri)
+
+nri_desc <- merge(select(aggregate(value ~ data_series, nri, function(x){length(na.omit(x))}), data_series, "observations" = value),
+                  as.data.frame(as.matrix(aggregate(value ~ data_series, nri, function(x){quantile(x, c(0, 0.25, 0.5, 0.75, 1), na.rm = T)}))),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, mean), data_series, "mean_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, function(x_){density(x_, na.rm = T)$x[which.max(density(x_, na.rm = T)$y)]}), data_series, "mode_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, var), data_series, "var_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, sd), data_series, "sd_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, moments::skewness), data_series, "skewness_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- merge(nri_desc,
+                  select(aggregate(value ~ data_series, nri, moments::kurtosis), data_series, "kurtosis_value" = value),
+                  by = "data_series", all.x = TRUE)
+
+nri_desc <- as.data.frame(t(nri_desc))
+names(nri_desc) <- nri_desc[1, ]
+nri_desc <- nri_desc[-1,]
+names(nri_desc) <- c("ALR buildings", "EAL buildings", "EAL score", "Risk score")
+row.names(nri_desc) <- c("Observations", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
+
+# Save as Latex table
+nri_desc |> 
+  kbl(format = "latex", align = "r") |> 
+  kable_classic(full_width = TRUE) |> 
+  write_file(file = "tables/nri_descriptives.tex")
