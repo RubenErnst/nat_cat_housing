@@ -37,8 +37,11 @@ openxlsx::write.xlsx(spec_6_2_final_maj, file = "results/final/spec_6_2_final_ma
 ### Spec 6.3 (Credit constraint / credit quality using HMDA) ----
 load("data/hmda_panels.RData")
 
-ltv_panel_median <- subset(ltv_panel_median, !is.na(median_loan_to_value_ratio))
-dti_panel_median <- subset(dti_panel_median, !is.na(median_debt_to_income_ratio))
+ltv_panel_median$median_loan_to_value_ratio <- as.numeric(ltv_panel_median$median_loan_to_value_ratio)
+dti_panel_median$median_debt_to_income_ratio <- as.numeric(dti_panel_median$median_debt_to_income_ratio) # NAs introduced from empty or range values, checked and okay
+
+ltv_panel_median <- subset(ltv_panel_median, !is.na(median_loan_to_value_ratio) & median_loan_to_value_ratio > 0)
+dti_panel_median <- subset(dti_panel_median, !is.na(median_debt_to_income_ratio) & median_loan_to_value_ratio > 0)
 
 spec_5_3_panel_maj$year <- lubridate::year(spec_5_3_panel_maj$date)
 spec_5_3_panel_maj <- merge(spec_5_3_panel_maj,
