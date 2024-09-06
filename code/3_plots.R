@@ -3,6 +3,10 @@ rm(list = ls())
 library(tidyverse)
 library(ggrepel)
 library(ggpubr)
+library(latex2exp)
+library(paletteer)
+library(sf)
+library(cowplot)
 
 
 ### Data exploration ----
@@ -117,7 +121,7 @@ load("data/zillow_county.RData")
 zhvi_by_data_series_line <- aggregate(zhvi ~ data_series + lubridate::year(date), zillow_county, median, na.rm = T) |>
   select(data_series, "year" = `lubridate::year(date)`, zhvi) |>
   mutate(data_series = factor(data_series, levels = c("all_homes_bottom_tier", "all_homes_middle_tier", "all_homes_top_tier", "single_family_homes", "condo_coop", "one_bedroom", "two_bedroom", "three_bedroom", "four_bedroom", "five_plus_bedroom"))) |> 
-  ggplot(aes(x = year, y = zhvi, linetype = data_series)) +
+  ggplot(aes(x = year, y = zhvi, color = data_series)) +
   geom_line() +
   geom_text_repel(data = aggregate(zhvi ~ data_series + lubridate::year(date), zillow_county, median, na.rm = T) |> select(data_series, "year" = `lubridate::year(date)`, zhvi) |> filter(year == last(year)),
                   aes(label = plyr::revalue(data_series, c("all_homes_bottom_tier" = "Bottom Tier",
@@ -134,7 +138,7 @@ zhvi_by_data_series_line <- aggregate(zhvi ~ data_series + lubridate::year(date)
                   hjust = 0.6, vjust = -1.5, size = 3) +
   scale_x_continuous(limits = c(2000, 2024), breaks = seq(2000, 2024, 2)) +
   scale_y_continuous(labels = scales::comma_format(big.mark = "'"), name = "Zillow Home Value Index", limits = c(0, 450000)) +
-  scale_linetype(name = "Data Series", labels = c("Bottom Tier", "Middle Tier", "Top Tier", "Single Family", "Condo / Co-Op", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4 Bedrooms", "5+ Bedrooms")) +
+  scale_color_paletteer_d(name = "Data Series", palette = "ggsci::default_aaas", labels = c("Bottom Tier", "Middle Tier", "Top Tier", "Single Family", "Condo / Co-Op", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4 Bedrooms", "5+ Bedrooms")) +
   theme_bw() +
   theme(legend.position = "bottom",
         axis.title.x = element_blank(),
@@ -143,7 +147,6 @@ zhvi_by_data_series_line <- aggregate(zhvi ~ data_series + lubridate::year(date)
         panel.spacing = margin(1, 80, 1, 1, "points"))
 
 ggsave(filename = "plots/zhvi_by_data_series_line.pdf", plot = zhvi_by_data_series_line, width = 10, height = 7.5)
-
 
 
 # FEMA disaster maps by incident_type ----
@@ -376,6 +379,332 @@ maps_plot <- ggarrange(map_fire, map_storm, map_flood, map_hurricane, map_snow, 
 ggsave(filename = "plots/maps_plot_contiguous.pdf", plot = maps_plot, width = 12, height = 13)
 
 
+### FEMA disaster maps by incident_type - Alaska, Hawaii facets ----
+load("data/county_shape.RData")
+county_shape <- st_simplify(county_shape, preserveTopology = TRUE, dTolerance = 1000)
+county_shape$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
+county_shape$incident_type <- paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")
+
+dis_per_region <- aggregate(disaster_number ~ place_code + incident_type, subset(fema, date_incident_begin >= as.Date("2000-01-01") & declaration_type == "Major Disaster"), function(x){length(unique(x))})
+dis_per_region <- subset(dis_per_region, incident_type %in% c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"))
+
+dis_per_region <- merge(splitstackshape::cSplit(data.frame(subset(county_shape, substr(fips_code, 1, 2) %in% fips_states$state_code), "incident_type" = paste(c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"), collapse = ", ")), splitCols = "incident_type", sep = ", ", direction = "long"),
+                        dis_per_region,
+                        by.x = c("fips_code", "incident_type"), by.y = c("place_code", "incident_type"), all.x = TRUE)
+
+map_fire <- ggplot(data = subset(dis_per_region, incident_type == "Fire" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#fcdfca", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_fire <- ggdraw(map_fire) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Fire" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#fcdfca", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Fire" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#fcdfca", high = "#ad4700", na.value = "white", name = "Nr. of Fires") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+map_storm <- ggplot(data = subset(dis_per_region, incident_type == "Severe Storm" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#ccd0f0", high = "#333859", na.value = "white", name = "Nr. of Severe Storms") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_storm <- ggdraw(map_storm) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Severe Storm" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#ccd0f0", high = "#333859", na.value = "white", name = "Nr. of Severe Storms") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Severe Storm" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#ccd0f0", high = "#333859", na.value = "white", name = "Nr. of Severe Storms") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+map_flood <- ggplot(data = subset(dis_per_region, incident_type == "Flood" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#f2e5c9", high = "#a68e5e", na.value = "white", name = "Nr. of Floods") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_flood <- ggdraw(map_flood) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Flood" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#f2e5c9", high = "#a68e5e", na.value = "white", name = "Nr. of Floods") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Flood" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#f2e5c9", high = "#a68e5e", na.value = "white", name = "Nr. of Floods") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+map_hurricane <- ggplot(data = subset(dis_per_region, incident_type == "Hurricane" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#b2ccd1", high = "#325961", na.value = "white", name = "Nr. of Hurricanes") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_hurricane <- ggdraw(map_hurricane) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Hurricane" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#b2ccd1", high = "#325961", na.value = "white", name = "Nr. of Hurricanes") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Hurricane" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#b2ccd1", high = "#325961", na.value = "white", name = "Nr. of Hurricanes") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+map_snow <- ggplot(data = subset(dis_per_region, incident_type == "Snowstorm" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+  scale_fill_gradient(low = "#a1e7f0", high = "#32afbf", na.value = "white", name = "Nr. of Snowstorms") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_snow <- ggdraw(map_snow) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Snowstorm" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#a1e7f0", high = "#32afbf", na.value = "white", name = "Nr. of Snowstorms") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Snowstorm" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#212121") +
+      scale_fill_gradient(low = "#a1e7f0", high = "#32afbf", na.value = "white", name = "Nr. of Snowstorms") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+map_tornado <- ggplot(data = subset(dis_per_region, incident_type == "Tornado" & !STATEFP %in% c("02", "15"))) +
+  geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#494949", linewidth = 0.2) +
+  scale_fill_gradient(low = "#dbba95", high = "#5c442a", na.value = "white", breaks = c(1,2,3), name = "Nr. of Tornados") +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), crs = "WGS84") +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(0,0,0,0),
+        panel.spacing = margin(0,0,0,0))
+
+map_tornado <- ggdraw(map_tornado) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Tornado" & STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#494949", linewidth = 0.2) +
+      scale_fill_gradient(low = "#dbba95", high = "#5c442a", na.value = "white", breaks = c(1,2,3), name = "Nr. of Tornados") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.122, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(dis_per_region, incident_type == "Tornado" & STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = disaster_number), color = "#494949", linewidth = 0.2) +
+      scale_fill_gradient(low = "#dbba95", high = "#5c442a", na.value = "white", breaks = c(1,2,3), name = "Nr. of Tornados") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.2672, y = 0.1168, width = 0.1, height = 0.1)
+
+maps_plot <- ggarrange(map_fire, map_storm, map_flood, map_hurricane, map_snow, map_tornado, 
+                       labels = c("Fire", "Severe Storm", "Flood", "Hurricane", "Snowstorm", "Tornado"),
+                       ncol = 2, nrow = 3)
+
+ggsave(filename = "plots/maps_plot_facets_simplified.pdf", plot = maps_plot, width = 12, height = 13)
+
+
 
 ### Estimator heatmap ----
 heatmap_plot <- openxlsx::read.xlsx("results/panel_spec_13_1_log.xlsx")
@@ -492,7 +821,8 @@ katrina <- katrina[!duplicated(katrina$fips_code),]
 county_shape$fips_code <- fips_pad(county_shape$STATEFP, county_shape$COUNTYFP)
 katrina_plot <- merge(subset(county_shape, STATEFP %in% fips_states$state_code),
                       katrina,
-                      by = "fips_code", all.x = TRUE)
+                      by = "fips_code", all.x = TRUE) |> 
+  st_simplify(preserveTopology = TRUE, dTolerance = 1000)
 
 map_katrina <- ggplot(data = subset(katrina_plot, !STATEFP %in% c("02", "15"))) +
   geom_sf(aes(geometry = geometry, fill = declaration_type), color = "#212121") +
@@ -510,6 +840,67 @@ map_katrina <- ggplot(data = subset(katrina_plot, !STATEFP %in% c("02", "15"))) 
         axis.ticks = element_blank(),
         legend.position = "right")
 
-ggsave(filename = "plots/katrina_map.pdf", plot = map_katrina, width = 10, height = 5)
+map_katrina <- ggdraw(map_katrina) +
+  draw_plot({
+    ggplot(data = subset(katrina_plot, STATEFP == "02")) +
+      geom_sf(aes(geometry = geometry, fill = declaration_type), color = "#212121") +
+      scale_fill_manual(values = c("Emergency" = "#ffbcb3", "Major Disaster" = "#f64931"), na.value = "white", name = "Declaration Type") +
+      coord_sf(xlim = c(-177.5, -131.5), ylim = c(52, 71), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0, y = 0.09, width = 0.3, height = 0.3) +
+  draw_plot({
+    ggplot(data = subset(katrina_plot, STATEFP == "15")) +
+      geom_sf(aes(geometry = geometry, fill = declaration_type), color = "#212121") +
+      scale_fill_manual(values = c("Emergency" = "#ffbcb3", "Major Disaster" = "#f64931"), na.value = "white", name = "Declaration Type") +
+      coord_sf(xlim = c(-160.5, -154.5), ylim = c(18.8, 22.3), crs = "WGS84") +
+      theme_bw() +
+      theme(axis.title = element_blank(),
+            panel.grid = element_blank(),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            legend.position = "none",
+            panel.background = element_rect(fill='transparent'),
+            plot.background = element_rect(fill='transparent', color=NA),
+            plot.margin = margin(0, 0, 0, 0, "pt"))
+  },
+  x = 0.221, y = 0.09, width = 0.1, height = 0.1)
+
+ggsave(filename = "plots/katrina_map_simplified.pdf", plot = map_katrina, width = 10, height = 5)
 # ggsave(filename = "plots/katrina_map.png", plot = map_katrina, width = 10, height = 5)
 
+
+### Regression results ----
+spec_1_res <- openxlsx::read.xlsx("results/final final/spec_1_maj.xlsx")
+spec_1_res <- subset(spec_1_res, spec %in% c("1.1", "1.2", "1.3", "1.4"))
+spec_1_res$var_label <- c("$Dis_{6m}$", "$Dis_{3m}$", "$Dis_{6m}$", "$Dis_{12m}$", "$Dis_{6m}$", "$unemployment$", "$log(wage)$", "$log(GDP)$", "$Dis_{3m}$", "$Dis_{6m}$", "$Dis_{12m}$", "$unemployment$", "$log(wage)$", "$log(GDP)$")
+spec_1_res$variable[spec_1_res$variable == "nr_dis_lag_0.5"] <- "nr_dis_lag_0.5_e"
+spec_1_res$variable <- factor(spec_1_res$variable, levels = c("log(gdp_value)", "log(avg_wkly_wage)", "unemployment_rate", "nr_dis_lag_1_e", "nr_dis_lag_0.5_e", "nr_dis_lag_0.25"))
+
+spec_1_res$ci_min <- spec_1_res$estimate - 1.96 * spec_1_res$std_error
+spec_1_res$ci_max <- spec_1_res$estimate + 1.96 * spec_1_res$std_error
+
+spec_1_plot <- ggplot(spec_1_res, aes(x = estimate, y = variable, color = spec)) +
+  geom_point(size = 2, position = position_dodge(width = 0.5)) +
+  geom_errorbarh(aes(xmin = ci_min, xmax = ci_max), height = 0.15, linewidth = 0.6, position = position_dodge(width = 0.5)) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_y_discrete(labels = c(TeX("$log(GDP)$"), TeX("$log(wage)$"), TeX("$unemployment$"), TeX("$Dis_{12m}$"), TeX("$Dis_{6m}$"), TeX("$Dis_{3m}$"))) +
+  scale_x_continuous(breaks = seq(-0.02, 0.12, 0.02)) +
+  scale_color_paletteer_d(name = "Specification", palette = "ggsci::default_aaas", direction = 1, labels = c("Model (1):\nEntity FE, no controls\n", "Model (2):\nEntity FE, no controls\n", "Model (3):\nTwoways FE, controls\n", "Model (4):\nTwoways FE, controls")) +
+  xlab("Estimate") +
+  theme_bw() +
+  theme(axis.title.y = element_blank(),
+        panel.grid.minor = element_blank())
+
+ggsave(filename = "plots/spec_1_results.pdf", plot = spec_1_plot, width = 10, height = 5)
+# ggsave(filename = "plots/spec_1_results.png", plot = spec_1_res, width = 10, height = 5)
