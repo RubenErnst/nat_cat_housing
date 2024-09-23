@@ -49,8 +49,10 @@ assistance_panel <- aggregate(cbind(total_assistance, amount_ihp_approved, amoun
 assistance_panel <- select(assistance_panel, fips_code, "date" = ap_date, everything())
 assistance_panel$total_assistance <- assistance_panel$amount_ihp_approved + assistance_panel$amount_pa_obligated + assistance_panel$amount_hmgp_obligated
 
-assistance_panel <- merge(merge(merge(assistance_panel,
-                                      select(aggregate(total_assistance ~ date, assistance_panel, quantile, probs = 0.25), date, "p_1" = total_assistance),
+assistance_panel <- merge(merge(merge(merge(assistance_panel,
+                                            select(aggregate(total_assistance ~ date, assistance_panel, quantile, probs = 0.25), date, "p_1" = total_assistance),
+                                            by = "date", all.x = TRUE),
+                                      select(aggregate(total_assistance ~ date, assistance_panel, quantile, probs = 0.5), date, "p_2" = total_assistance),
                                       by = "date", all.x = TRUE),
                                 select(aggregate(total_assistance ~ date, assistance_panel, quantile, probs = 0.75), date, "p_3" = total_assistance),
                                 by = "date", all.x = TRUE),
@@ -68,10 +70,13 @@ spec_5_1_panel_maj$total_assistance[is.na(spec_5_1_panel_maj$total_assistance)] 
 
 spec_5_1_panel_maj$assistance_highest <- ifelse(spec_5_1_panel_maj$total_assistance == spec_5_1_panel_maj$max_val, 1, 0)
 spec_5_1_panel_maj$assistance_q4 <- ifelse(spec_5_1_panel_maj$total_assistance >= spec_5_1_panel_maj$p_3, 1, 0)
+spec_5_1_panel_maj$assistance_q3 <- ifelse(spec_5_1_panel_maj$total_assistance >= spec_5_1_panel_maj$p_2 & spec_5_1_panel_maj$total_assistance < spec_5_1_panel_maj$p_3, 1, 0)
+spec_5_1_panel_maj$assistance_q2 <- ifelse(spec_5_1_panel_maj$total_assistance >= spec_5_1_panel_maj$p_1 & spec_5_1_panel_maj$total_assistance < spec_5_1_panel_maj$p_2, 1, 0)
 spec_5_1_panel_maj$assistance_q1 <- ifelse(spec_5_1_panel_maj$total_assistance < spec_5_1_panel_maj$p_1, 1, 0)
 
 spec_5_1_panel_maj$max_val <- NULL
 spec_5_1_panel_maj$p_1 <- NULL
+spec_5_1_panel_maj$p_2 <- NULL
 spec_5_1_panel_maj$p_3 <- NULL
 
 save(spec_5_1_panel_maj, file = "data/spec_5_1_panel_maj_fg.RData")
@@ -85,6 +90,85 @@ spec_1 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5, subset(sp
 
 openxlsx::write.xlsx(spec_1, file = "results/final final/spec_1_maj.xlsx")
 
+
+### Spec 5.1 (a) ----
+spec_1_a <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_middle_tier", "effect" = "entity", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_middle_tier", "effect" = "entity", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_middle_tier", "effect" = "entity", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "individual")), "data_series" = "all_homes_middle_tier", "effect" = "entity", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_a"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_a"))
+
+openxlsx::write.xlsx(spec_1_a, file = "results/final final/spec_1_a_maj.xlsx")
+
+
+### Spec 5.1 (b) ----
+spec_5_1_b_panel_maj <- subset(select(nr_occ_type_panel_maj, zhvi, fips_code, date, nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e, unemployment_rate, avg_wkly_wage, gdp_value, incident_type, data_series), !incident_type %in% incident_type_excl)
+
+spec_5_1_b_panel_maj <- aggregate(cbind(nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e) ~ fips_code + date + data_series, spec_5_1_b_panel_maj, sum, na.rm = TRUE)
+
+temp <- nr_occ_type_panel_maj[!(duplicated(nr_occ_type_panel_maj[,c("fips_code", "date", "data_series")])),c("fips_code", "date", "data_series", "zhvi", "unemployment_rate", "avg_wkly_wage", "gdp_value")]
+spec_5_1_b_panel_maj <- merge(spec_5_1_b_panel_maj,
+                              temp,
+                              by = c("fips_code", "date", "data_series"), all.x = TRUE)
+
+assistance_panel <- dbGetQuery(main_db, "SELECT ap.fips_code, ap.ap_date, aq.total_assistance, aq.amount_ihp_approved, aq.amount_pa_obligated, aq.amount_hmgp_obligated FROM assistance_panel ap LEFT JOIN assistance_quartiles aq
+                               ON ap.fips_code = aq.place_code
+                               AND DATE(ap.ap_date, '+30 days') >= aq.date_incident_begin
+                               AND ap.ap_date < aq.date_incident_end;")
+
+assistance_panel[is.na(assistance_panel)] <- 0
+assistance_panel <- aggregate(cbind(total_assistance, amount_ihp_approved, amount_pa_obligated, amount_hmgp_obligated) ~ fips_code + ap_date, assistance_panel, sum, na.rm = TRUE)
+assistance_panel <- select(assistance_panel, fips_code, "date" = ap_date, everything())
+assistance_panel$total_assistance <- assistance_panel$amount_ihp_approved + assistance_panel$amount_pa_obligated + assistance_panel$amount_hmgp_obligated
+
+assistance_panel <- merge(merge(merge(merge(assistance_panel,
+                                            select(aggregate(total_assistance ~ date, assistance_panel, function(x){quantile(x[x != 0], probs = 0.25)}), date, "p_1" = total_assistance),
+                                            by = "date", all.x = TRUE),
+                                      select(aggregate(total_assistance ~ date, assistance_panel, function(x){quantile(x[x != 0], probs = 0.5)}), date, "p_2" = total_assistance),
+                                      by = "date", all.x = TRUE),
+                                select(aggregate(total_assistance ~ date, assistance_panel, function(x){quantile(x[x != 0], probs = 0.75)}), date, "p_3" = total_assistance),
+                                by = "date", all.x = TRUE),
+                          select(aggregate(total_assistance ~ date, assistance_panel, function(x){quantile(x[x != 0], probs = 1)}), date, "max_val" = total_assistance),
+                          by = "date", all.x = TRUE)
+
+assistance_panel$zero <- ifelse(assistance_panel$total_assistance == 0, 1, 0)
+
+save(assistance_panel, file = "data/assistance_panel_max_zeros_maj_fg.RData")
+
+
+spec_5_1_b_panel_maj <- merge(spec_5_1_b_panel_maj,
+                              assistance_panel,
+                              by = c("fips_code", "date"), all.x = TRUE)
+
+spec_5_1_b_panel_maj$total_assistance[is.na(spec_5_1_b_panel_maj$total_assistance)] <- 0
+
+spec_5_1_b_panel_maj$assistance_highest <- ifelse(spec_5_1_b_panel_maj$total_assistance == spec_5_1_b_panel_maj$max_val, 1, 0)
+spec_5_1_b_panel_maj$assistance_q4 <- ifelse(spec_5_1_b_panel_maj$total_assistance >= spec_5_1_b_panel_maj$p_3, 1, 0)
+spec_5_1_b_panel_maj$assistance_q3 <- ifelse(spec_5_1_b_panel_maj$total_assistance >= spec_5_1_b_panel_maj$p_2 & spec_5_1_b_panel_maj$total_assistance < spec_5_1_b_panel_maj$p_3, 1, 0)
+spec_5_1_b_panel_maj$assistance_q2 <- ifelse(spec_5_1_b_panel_maj$total_assistance >= spec_5_1_b_panel_maj$p_1 & spec_5_1_b_panel_maj$total_assistance < spec_5_1_b_panel_maj$p_2, 1, 0)
+spec_5_1_b_panel_maj$assistance_q1 <- ifelse(spec_5_1_b_panel_maj$total_assistance < spec_5_1_b_panel_maj$p_1 & spec_5_1_b_panel_maj$total_assistance > 0, 1, 0)
+
+spec_5_1_b_panel_maj$max_val <- NULL
+spec_5_1_b_panel_maj$p_1 <- NULL
+spec_5_1_b_panel_maj$p_2 <- NULL
+spec_5_1_b_panel_maj$p_3 <- NULL
+
+save(spec_5_1_b_panel_maj, file = "data/spec_5_1_b_panel_maj_fg.RData")
+
+
+spec_1_b <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & (zero == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & (zero == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * assistance_q4 + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & (assistance_q1 == 1 | assistance_q4 == 1)), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & zero == 0), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier" & zero == 0), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + nr_dis_lag_0.5 * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"),
+                  data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e) * (assistance_q2 + assistance_q3 + assistance_q4) + unemployment_rate + log(avg_wkly_wage), subset(spec_5_1_b_panel_maj, data_series == "all_homes_middle_tier"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "spec" = "1.1_b"))
+
+openxlsx::write.xlsx(spec_1_b, file = "results/final final/spec_1_b_maj.xlsx")
 
 
 ### Spec 5.2 ----
@@ -379,8 +463,8 @@ load("data/nri.RData")
 nri_composite$fips_code <- fips_pad(nri_composite$state_code, nri_composite$county_code)
 
 spec_5_3_panel_group <- merge(spec_5_3_panel_group,
-                        unique(select(nri_composite, fips_code, risk_score_composite, eal_score_composite, eal_building_value_composite, alr_building_composite)),
-                        by = "fips_code", all.x = TRUE)
+                              unique(select(nri_composite, fips_code, risk_score_composite, eal_score_composite, eal_building_value_composite, alr_building_composite)),
+                              by = "fips_code", all.x = TRUE)
 
 nri_mapping <- list("score_low" = c(0, 33),
                     "score_medium" = c(33, 67),
@@ -400,4 +484,111 @@ spec_6_5_final <- rbind(data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_w
                         data.frame(plm_results(plm(log(zhvi) ~ (nr_dis_lag_0.5_water + nr_dis_lag_0.5_wind + nr_dis_lag_0.5_geological + nr_dis_lag_0.5_cold + nr_dis_lag_0.5_fire + nr_dis_lag_0.5_human_cause) ^ 2 + nr_dis_lag_0.5_water * perc_maj_0.5_water + nr_dis_lag_0.5_wind * perc_maj_0.5_wind + nr_dis_lag_0.5_geological * perc_maj_0.5_geological + nr_dis_lag_0.5_cold * perc_maj_0.5_cold + nr_dis_lag_0.5_fire * perc_maj_0.5_fire + nr_dis_lag_0.5_human_cause * perc_maj_0.5_human_cause + unemployment_rate + log(avg_wkly_wage), subset(spec_5_3_panel_group, data_series == "all_homes_middle_tier" & alr_building_composite > nri_mapping$alr_high[1] & alr_building_composite <= nri_mapping$alr_high[2]), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "stratum" = "alr_building_high", "spec" = "6.5"))
 
 openxlsx::write.xlsx(spec_6_5_final, file = "results/final final/spec_6_5.xlsx")
+
+
+
+### Spec 6.6 ----
+load("data/nr_occ_type_panel.RData")
+load("data/nr_occ_type_panel_maj.RData")
+
+multi_occ_maj <- subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_999 != 0 & !is.na(nr_dis_lag_999)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_999" = incident_type, everything()), multi_occ_maj_999 > 1)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_10_e != 0 & !is.na(nr_dis_lag_10_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_10_e" = incident_type, everything()), multi_occ_maj_10_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_5_e != 0 & !is.na(nr_dis_lag_5_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_5_e" = incident_type, everything()), multi_occ_maj_5_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_3_e != 0 & !is.na(nr_dis_lag_3_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_3_e" = incident_type, everything()), multi_occ_maj_3_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_2_e != 0 & !is.na(nr_dis_lag_2_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_2_e" = incident_type, everything()), multi_occ_maj_2_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_1_e != 0 & !is.na(nr_dis_lag_1_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_1_e" = incident_type, everything()), multi_occ_maj_1_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_1 != 0 & !is.na(nr_dis_lag_1)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_1" = incident_type, everything()), multi_occ_maj_1 > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_0.5_e != 0 & !is.na(nr_dis_lag_0.5_e)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_0.5_e" = incident_type, everything()), multi_occ_maj_0.5_e > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_0.5 != 0 & !is.na(nr_dis_lag_0.5)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_0.5" = incident_type, everything()), multi_occ_maj_0.5 > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+multi_occ_maj <- merge(multi_occ_maj,
+                       subset(select(aggregate(incident_type ~ fips_code + date + data_series, subset(nr_occ_type_panel_maj, nr_dis_lag_0.25 != 0 & !is.na(nr_dis_lag_0.25)), function(x){length(unique(na.omit(x)))}), "multi_occ_maj_0.25" = incident_type, everything()), multi_occ_maj_0.25 > 1),
+                       by = c("fips_code", "date", "data_series"), all = TRUE)
+
+# Check cardinality of multi occ not too high
+stopifnot(all(aggregate(multi_occ_maj_0.25 ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_0.25 == 1))
+stopifnot(all(aggregate(multi_occ_maj_0.5 ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_0.5 == 1))
+stopifnot(all(aggregate(multi_occ_maj_0.5_e ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_0.5_e == 1))
+stopifnot(all(aggregate(multi_occ_maj_1_e ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_1_e == 1))
+stopifnot(all(aggregate(multi_occ_maj_2_e ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_2_e == 1))
+stopifnot(all(aggregate(multi_occ_maj_3_e ~ fips_code + date, multi_occ_maj, function(x){length(na.omit(unique(x)))})$multi_occ_maj_3_e == 1))
+
+save(multi_occ_maj, file = "data/multi_occ_maj.RData")
+
+# Remove multi-occ
+spec_6_6_panel_maj_0.5 <- anti_join(nr_occ_type_panel_maj,
+                                    subset(select(multi_occ_maj, fips_code, date, data_series, multi_occ_maj_0.5), !is.na(multi_occ_maj_0.5)),
+                                    by = c("fips_code", "date", "data_series"))
+
+spec_6_6_panel_maj_1 <- anti_join(nr_occ_type_panel_maj,
+                                  subset(select(multi_occ_maj, fips_code, date, data_series, multi_occ_maj_0.25, multi_occ_maj_0.5_e, multi_occ_maj_1_e), !(is.na(multi_occ_maj_0.25) & is.na(multi_occ_maj_0.5_e) & is.na(multi_occ_maj_1_e))),
+                                  by = c("fips_code", "date", "data_series"))
+
+spec_6_6_panel_maj_3 <- anti_join(nr_occ_type_panel_maj,
+                                  subset(select(multi_occ_maj, fips_code, date, data_series, multi_occ_maj_0.25, multi_occ_maj_0.5_e, multi_occ_maj_1_e, multi_occ_maj_2_e, multi_occ_maj_3_e), !(is.na(multi_occ_maj_0.25) & is.na(multi_occ_maj_0.5_e) & is.na(multi_occ_maj_1_e) & is.na(multi_occ_maj_2_e) & is.na(multi_occ_maj_3_e))),
+                                  by = c("fips_code", "date", "data_series"))
+
+
+spec_6_6_final_maj_1 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"))
+
+spec_6_6_final_maj_2 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"))
+
+spec_6_6_final_maj_3 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_0.5, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"),
+                              data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"))
+
+openxlsx::write.xlsx(rbind(spec_6_6_final_maj_1, spec_6_6_final_maj_2, spec_6_6_final_maj_3), file = "results/final final/spec_6_6_final_maj.xlsx")
+
+
+nr_occ_type_panel_trunc <- subset(nr_occ_type_panel, incident_type %in% c("Biological", "Chemical", "Toxic Substances", "Fishing Losses", "Drought", "Other"))
+
+spec_6_6_final_1 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Biological"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Biological", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Chemical"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Chemical", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Toxic Substances"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Toxic Substances", "spec" = "6.6"))
+
+spec_6_6_final_2 <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Fishing Losses"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Fishing Losses", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Drought"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Drought", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.5 + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"),
+                          data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(nr_occ_type_panel_trunc, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"))
+
+openxlsx::write.xlsx(rbind(spec_6_6_final_1, spec_6_6_final_2), file = "results/final final/spec_6_6_final.xlsx")
 
