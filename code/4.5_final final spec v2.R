@@ -227,4 +227,4 @@ spec_6_6_final_maj <- rbind(data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.
                             data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_1, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"),
                             data.frame(plm_results(plm(log(zhvi) ~ nr_dis_lag_0.25 + nr_dis_lag_0.5_e + nr_dis_lag_1_e + nr_dis_lag_2_e + nr_dis_lag_3_e + unemployment_rate + log(avg_wkly_wage), subset(spec_6_6_panel_maj_3, data_series == "all_homes_middle_tier" & incident_type == "Other"), index = c("fips_code", "date"), model = "within", effect = "twoways")), "data_series" = "all_homes_middle_tier", "effect" = "both", "incident_type" = "Other", "spec" = "6.6"))
 
-openxlsx::write.xlsx(spec_6_6_final_maj, file = "results/final final/v2/spec_6_6_final_maj.xlsx")
+openxlsx::write.xlsx(spec_6_6_final_maj, file = "results/final final/v2/spec_6_6_maj.xlsx")
