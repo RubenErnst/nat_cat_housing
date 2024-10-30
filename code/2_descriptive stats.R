@@ -117,6 +117,136 @@ fema_desc |>
   write_file(file = "tables/fema_descriptives.tex")
 
 
+load("data/spec_5_1_panel_maj_fg.RData")
+spec_5_1_panel_maj <- pivot_longer(select(subset(spec_5_1_panel_maj, data_series == "all_homes_middle_tier"), fips_code, date, nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e), cols = -c(fips_code, date), names_to = "time_window", values_to = "nr_dis")
+
+dis_desc <- merge(select(aggregate(date ~ time_window, spec_5_1_panel_maj, function(x){length(x)}), time_window, "observations" = date),
+                  select(aggregate(date ~ time_window, spec_5_1_panel_maj, min), time_window, "min_date" = date),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(date ~ time_window, spec_5_1_panel_maj, max), time_window, "max_date" = date),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc$date_range <- paste0(dis_desc$min_date, " - ", dis_desc$max_date)
+dis_desc$min_date <- NULL
+dis_desc$max_date <- NULL
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(fips_code ~ time_window, spec_5_1_panel_maj, function(x){length(unique(x))}), time_window, "nr_regions" = fips_code),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  as.data.frame(as.matrix(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, function(x){quantile(x, c(0, 0.25, 0.5, 0.75, 1), na.rm = T)}))),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, mean), time_window, "mean_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, function(x_){density(x_, na.rm = T)$x[which.max(density(x_, na.rm = T)$y)]}), time_window, "mode_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, var), time_window, "var_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, sd), time_window, "sd_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, moments::skewness), time_window, "skewness_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- merge(dis_desc,
+                  select(aggregate(nr_dis ~ time_window, spec_5_1_panel_maj, moments::kurtosis), time_window, "kurtosis_nr_dis" = nr_dis),
+                  by = "time_window", all.x = TRUE)
+
+dis_desc <- as.data.frame(t(dis_desc))
+names(dis_desc) <- dis_desc[1, ]
+dis_desc <- dis_desc[-1,]
+dis_desc <- select(dis_desc, nr_dis_lag_0.25, nr_dis_lag_0.5, nr_dis_lag_0.5_e, nr_dis_lag_1_e)
+row.names(dis_desc) <- c("Observations", "Date Range", "Regions", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
+
+# Save as Latex table
+dis_desc |> 
+  kbl(format = "latex", align = "r") |> 
+  kable_classic(full_width = TRUE) |> 
+  write_file(file = "tables/nr_dis_descriptives.tex")
+
+
+load("data/decl_type_panel.RData")
+decl_type_panel <- select(decl_type_panel, fips_code, date, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1_e)
+decl_type_panel$perc_maj_0.25[is.na(decl_type_panel$perc_maj_0.25)] <- 0
+decl_type_panel$perc_maj_0.5[is.na(decl_type_panel$perc_maj_0.5)] <- 0
+decl_type_panel$perc_maj_0.5_e[is.na(decl_type_panel$perc_maj_0.5_e)] <- 0
+decl_type_panel$perc_maj_1_e[is.na(decl_type_panel$perc_maj_1_e)] <- 0
+decl_type_panel$perc_maj_0.25 <- decl_type_panel$perc_maj_0.25 * 100
+decl_type_panel$perc_maj_0.5 <- decl_type_panel$perc_maj_0.5 * 100
+decl_type_panel$perc_maj_0.5_e <- decl_type_panel$perc_maj_0.5_e * 100
+decl_type_panel$perc_maj_1_e <- decl_type_panel$perc_maj_1_e * 100
+
+decl_type_panel <- pivot_longer(decl_type_panel, cols = -c(fips_code, date), names_to = "time_window", values_to = "perc_maj")
+
+maj_desc <- merge(select(aggregate(date ~ time_window, decl_type_panel, function(x){length(x)}), time_window, "observations" = date),
+                  select(aggregate(date ~ time_window, decl_type_panel, min), time_window, "min_date" = date),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(date ~ time_window, decl_type_panel, max), time_window, "max_date" = date),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc$date_range <- paste0(maj_desc$min_date, " - ", maj_desc$max_date)
+maj_desc$min_date <- NULL
+maj_desc$max_date <- NULL
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(fips_code ~ time_window, decl_type_panel, function(x){length(unique(x))}), time_window, "nr_regions" = fips_code),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  as.data.frame(as.matrix(aggregate(perc_maj ~ time_window, decl_type_panel, function(x){quantile(x, c(0, 0.25, 0.5, 0.75, 1), na.rm = T)}))),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, mean), time_window, "mean_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, function(x_){density(x_, na.rm = T)$x[which.max(density(x_, na.rm = T)$y)]}), time_window, "mode_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, var), time_window, "var_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, sd), time_window, "sd_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, moments::skewness), time_window, "skewness_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- merge(maj_desc,
+                  select(aggregate(perc_maj ~ time_window, decl_type_panel, moments::kurtosis), time_window, "kurtosis_nr_dis" = perc_maj),
+                  by = "time_window", all.x = TRUE)
+
+maj_desc <- as.data.frame(t(maj_desc))
+names(maj_desc) <- maj_desc[1, ]
+maj_desc <- maj_desc[-1,]
+maj_desc <- select(maj_desc, perc_maj_0.25, perc_maj_0.5, perc_maj_0.5_e, perc_maj_1_e)
+row.names(maj_desc) <- c("Observations", "Date Range", "Regions", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
+
+# Save as Latex table
+maj_desc |> 
+  kbl(format = "latex", align = "r") |> 
+  kable_classic(full_width = TRUE) |> 
+  write_file(file = "tables/perc_maj_descriptives.tex")
+
+
 ### Descriptives on BEA / LAUS ----
 load("data/bea_gdp.RData")
 load("data/bls_laus.RData")
@@ -196,8 +326,8 @@ econ_desc_out |>
 load("data/hmda_panels.RData")
 
 hmda <- merge(dti_panel_median, ltv_panel_median, by = c("fips_code", "as_of_year"), all = T)
-hmda$median_debt_to_income_ratio <- as.numeric(hmda$median_debt_to_income_ratio) / 100
-hmda$median_loan_to_value_ratio <- as.numeric(hmda$median_loan_to_value_ratio) / 100
+hmda$median_debt_to_income_ratio <- as.numeric(hmda$median_debt_to_income_ratio)
+hmda$median_loan_to_value_ratio <- as.numeric(hmda$median_loan_to_value_ratio)
 
 hmda <- pivot_longer(hmda, cols = c("median_debt_to_income_ratio", "median_loan_to_value_ratio"), names_to = "data_series", values_to = "value")
 hmda <- subset(hmda, value > 0)
@@ -249,7 +379,7 @@ hmda_desc <- merge(hmda_desc,
 hmda_desc <- as.data.frame(t(hmda_desc))
 names(hmda_desc) <- hmda_desc[1, ]
 hmda_desc <- hmda_desc[-1,]
-names(hmda_desc) <- c("Debt to income ratio", "Loan to value ratio")
+names(hmda_desc) <- c("Median DTI", "Median LTV")
 row.names(hmda_desc) <- c("Observations", "Date Range", "Regions", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
 
 # Save as Latex table
@@ -265,7 +395,8 @@ load("data/nri.RData")
 
 nri_composite$fips_code <- fips_pad(nri_composite$state_code, nri_composite$county_code)
 
-nri <- select(nri_composite, fips_code, risk_score_composite, eal_score_composite, eal_building_value_composite, alr_building_composite)
+nri <- select(nri_composite, fips_code, risk_score_composite, alr_building_composite)
+nri$alr_building_composite <- nri$alr_building_composite * 100
 nri <- pivot_longer(nri, cols = -fips_code, names_to = "data_series", values_to = "value")
 nri <- unique(nri)
 
@@ -300,7 +431,7 @@ nri_desc <- merge(nri_desc,
 nri_desc <- as.data.frame(t(nri_desc))
 names(nri_desc) <- nri_desc[1, ]
 nri_desc <- nri_desc[-1,]
-names(nri_desc) <- c("ALR buildings", "EAL buildings", "EAL score", "Risk score")
+names(nri_desc) <- c("ALR buildings", "Risk score")
 row.names(nri_desc) <- c("Observations", "Minimum", "25% Quantile", "Median", "75% Quantile", "Maximum", "Mean", "Mode", "Variance", "Standard Deviation", "Skewness", "Kurtosis")
 
 # Save as Latex table
